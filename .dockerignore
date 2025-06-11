@@ -1,0 +1,6 @@
+.git*
+**/*.pyc
+.venv/
+__pycache__/
+conversation_history/
+.vscode/
