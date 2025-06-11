@@ -13,7 +13,9 @@ Setup Instructions
 1. Backend Setup
 
 Install Python dependencies:
-bashpip install -r requirements.txt
+```bash
+pip install -r requirements.txt
+```
 
 Configure environment variables:
 
@@ -23,9 +25,13 @@ Optional: Configure API keys for GitHub, Jira, Jenkins, Slack
 
 
 Run the FastAPI server:
-bashpython main.py
+```bash
+python main.py
+```
 or
-bashuvicorn main:app --reload --host 0.0.0.0 --port 8000
+```bash
+uvicorn main:app --reload --host 0.0.0.0 --port 8000
+```
 The API will be available at http://localhost:8000
 
 2. Frontend Setup
@@ -34,8 +40,9 @@ Serve the HTML file:
 
 Use a local web server (like Live Server in VS Code)
 Or use Python's built-in server:
-bashpython -m http.server 3000
-
+```bash
+python -m http.server 3000
+```
 
 
 Access the application:

@@ -2,8 +2,7 @@ from datetime import datetime
 from typing import Any, Dict, List
 
 from pydantic import BaseModel
-
-from backend.views.enums import WorkflowStatus
+from views.enums import WorkflowStatus
 
 
 class WorkflowStep(BaseModel):

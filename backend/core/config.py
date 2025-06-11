@@ -1,12 +1,12 @@
 import os
-import secrets
+from pathlib import Path
 
 from cryptography.fernet import Fernet
-from pydantic import PostgresDsn, computed_field
-from pydantic_core import MultiHostUrl
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-env_file = os.path.join(os.path.dirname(__file__), ".env")
+env_dir = Path(__file__).resolve().parent.parent
+
+env_file = os.path.join(env_dir, ".env")
 
 
 class Settings(BaseSettings):
@@ -23,3 +23,6 @@ class Settings(BaseSettings):
     app_description: str = "An AI-powered workflow automation assistant"
     GEMINI_API_KEY: str
     ENCRYPTION_KEY: str = Fernet.generate_key().decode()
+
+
+settings = Settings()  # type: ignore

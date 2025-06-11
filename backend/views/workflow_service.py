@@ -1,14 +1,20 @@
 import json
+import logging
 import uuid
 from datetime import datetime
 from typing import Any, Dict, List
 
+import google.generativeai as genai
+from core.config import settings
 from fastapi import Request
+from views.enums import WorkflowStatus
+from views.schemas.workflow import Workflow, WorkflowStep
 
-from backend.views.enums import WorkflowStatus
-from backend.views.schemas.workflow import Workflow, WorkflowStep
+logger = logging.getLogger(__name__)
 
 workflows_db = {}
+
+GEMINI_API_KEY = settings.GEMINI_API_KEY
 
 
 def get_user_info(request: Request) -> Dict[str, str]:
@@ -58,6 +64,9 @@ async def process_with_gemini(message: str, user_context: dict) -> Dict[str, Any
         
         Be helpful and explain what you understand from their request.
         """
+        if GEMINI_API_KEY:
+            genai.configure(api_key=GEMINI_API_KEY)
+            model = genai.GenerativeModel("gemini-1.5-flash")
 
         response = model.generate_content(prompt)
 
