@@ -1,6 +1,8 @@
-AutoFlowBot - Workflow Automation Assistant
-AutoFlowBot is a comprehensive workflow automation assistant that integrates with various development tools like GitHub, Jira, Jenkins, and Slack to streamline your development processes through natural language commands.
-Features
+# AutoFlowBot - Your Intelligent Workflow Automation Assistant
+
+AutoFlowBot streamlines your development processes by integrating with essential tools like GitHub, Jira, Jenkins, and Slack. Leverage the power of natural language commands to manage complex workflows effortlessly.
+
+## Features
 
 Natural Language Processing: Powered by Google's Gemini AI
 Multi-Service Integration: Connect GitHub, Jira, Jenkins, Slack
@@ -9,8 +11,20 @@ User Authentication: Secure login and registration system
 Workflow History: Track and review executed workflows
 Real-time Chat Interface: Interactive bot communication
 
-Setup Instructions
-1. Backend Setup
+## Prerequisites
+
+- Python 3.8+
+- pip (Python package installer)
+
+## Getting Started
+
+### 1. Clone the Repository
+```bash
+git clone <your-repository-url>
+cd <repository-directory>
+```
+
+### 2. Backend Setup
 
 Install Python dependencies:
 ```bash
@@ -34,7 +48,7 @@ uvicorn main:app --reload --host 0.0.0.0 --port 8000
 ```
 The API will be available at http://localhost:8000
 
-2. Frontend Setup
+### 3. Frontend Setup
 
 Serve the HTML file:
 
@@ -51,158 +65,171 @@ Open http://localhost:3000 in your browser
 
 
 
-3. Getting API Keys
-Gemini AI (Required)
+### 4. Getting API Keys
 
-Go to Google AI Studio
-Create a new API key
-Add it to your .env file as GEMINI_API_KEY
+#### Gemini AI (Required)
+1. Go to [Google AI Studio](https://aistudio.google.com/app/apikey) (or search for "Google AI Studio API Key").
+2. Create a new API key.
+3. Add it to your `.env` file as `GEMINI_API_KEY`.
 
-GitHub (Optional)
+#### GitHub (Optional)
+1. Go to GitHub **Settings** > **Developer settings** > **Personal access tokens** > **Tokens (classic)**.
+2. Click **Generate new token** (or "Generate new token (classic)").
+3. Give your token a descriptive name.
+4. Select the necessary scopes/permissions (e.g., `repo` for accessing repositories, `workflow` for GitHub Actions, etc., depending on your bot's needs).
+5. Click **Generate token**.
+6. Copy the token immediately (you won't see it again).
+7. Add it to your `.env` file as `GITHUB_TOKEN`.
 
-Go to GitHub Settings > Developer settings > Personal access tokens
-Generate a new token with appropriate permissions
-Add to .env as GITHUB_TOKEN
+#### Jira (Optional)
+1. Go to your Jira account settings:
+    - Click on your profile picture in the bottom left.
+    - Select **Profile**.
+    - Go to **Security** > **Create and manage API tokens** (or similar wording depending on your Jira version).
+2. Click **Create API token**.
+3. Give your token a label.
+4. Click **Create**.
+5. Copy the token immediately.
+6. Add your Jira URL (e.g., `JIRA_URL=https://your-domain.atlassian.net`), your Jira email/username (e.g., `JIRA_USERNAME=your_email@example.com`), and the API token (e.g., `JIRA_API_TOKEN=your_token`) to your `.env` file.
 
-Jira (Optional)
+#### Jenkins (Optional)
+1. Log in to your Jenkins instance.
+2. Click on your username in the top right corner.
+3. Select **Configure** (or **My Views** > **Configure** depending on the version).
+4. Under the "API Token" section, click **Add new Token**.
+5. Give the token a name and click **Generate**.
+6. Copy the generated token immediately.
+7. Add your Jenkins URL (e.g., `JENKINS_URL=http://your-jenkins-server:8080`), your Jenkins username (e.g., `JENKINS_USERNAME=your_username`), and the API token (e.g., `JENKINS_API_TOKEN=your_token`) to your `.env` file.
 
-Go to your Jira account settings
-Create an API token
-Add your Jira URL, username, and token to .env
+#### Slack (Optional)
+1. Go to api.slack.com/apps and click **Create New App**.
+2. Choose "From scratch", give your app a name, and select your workspace.
+3. Under "Add features and functionality", select **Bots**.
+4. Configure your bot user and add necessary scopes under **OAuth & Permissions** (e.g., `chat:write`, `commands`).
+5. Install the app to your workspace.
+6. Copy the **Bot User OAuth Token** (starts with `xoxb-`).
+7. Add this token to your `.env` file (e.g., `SLACK_BOT_TOKEN=your_xoxb_token`).
+8. (Optional) If you need a Webhook URL for incoming messages to Slack, navigate to **Incoming Webhooks**, activate it, and add a new webhook to your workspace. Copy the Webhook URL and add it to `.env` (e.g., `SLACK_WEBHOOK_URL=your_webhook_url`).
 
-Jenkins (Optional)
+## Usage
 
-Generate an API token in Jenkins user settings
-Add Jenkins URL, username, and token to .env
+### 1. User Registration/Login
 
-Slack (Optional)
+- Create an account or log in with existing credentials.
+- Note: All user data is currently stored in memory. This should be replaced with a persistent database solution in a production environment.
 
-Create a Slack app at api.slack.com
-Get the bot token and webhook URL
-Add to .env
+### 2. Connect Services
 
-Usage
-1. User Registration/Login
+- Click the "Connect" button for each service (GitHub, Jira, Jenkins, Slack) you wish to integrate.
+- Provide the necessary API credentials when prompted.
+- Services will indicate a "Connected" status once successfully configured.
 
-Create an account or login with existing credentials
-All user data is stored in memory (replace with database in production)
+### 3. Chat with AutoFlowBot
 
-2. Connect Services
+Interact with AutoFlowBot using natural language commands in the chat interface. Examples include:
+- "Deploy the latest release to staging"
+- "Create a new GitHub issue for bug fix"
+- "Trigger Jenkins build for main branch"
+- "Send deployment notification to team"
+- "Create a Jira ticket for feature request"
 
-Click "Connect" buttons for each service you want to integrate
-Provide API credentials for each service
-Services will show as "Connected" once configured
+### 4. View Workflow History
 
-3. Chat with AutoFlowBot
-Use natural language commands like:
+- Executed workflows are logged in the history section.
+- Click "View Details" for a specific workflow to see its individual steps and their statuses.
 
-"Deploy the latest release to staging"
-"Create a new GitHub issue for bug fix"
-"Trigger Jenkins build for main branch"
-"Send deployment notification to team"
-"Create a Jira ticket for feature request"
+## API Reference
 
-4. View Workflow History
+The backend exposes the following API endpoints. For detailed interactive documentation (Swagger UI), navigate to `http://localhost:8000/docs` after starting the backend server.
 
-See executed workflows in the history section
-Click "View Details" to see workflow steps and status
+### Authentication
+- `POST /auth/register`: Register a new user.
+- `POST /auth/login`: Log in an existing user.
+- `GET /auth/me`: Get information about the currently authenticated user.
 
-API Endpoints
-Authentication
+### Integrations
+- `POST /integrations/connect`: Connect a new service.
+- `GET /integrations/list`: List all currently connected services.
+- `DELETE /integrations/{id}`: Disconnect a specific service by its ID.
 
-POST /auth/register - Register new user
-POST /auth/login - User login
-GET /auth/me - Get current user info
+### Chat & Workflows
+- `POST /chat/process`: Process a chat message and potentially trigger a workflow.
+- `GET /workflows/history`: Retrieve the history of executed workflows.
+- `GET /workflows/{id}`: Get details for a specific workflow by its ID.
+- `POST /workflows/{id}/retry`: Retry a failed workflow by its ID.
 
-Integrations
+### Service-Specific Endpoints
+- **GitHub:** `/github/*` (e.g., for repository actions, issue management)
+- **Jira:** `/jira/*` (e.g., for ticket creation, status updates)
+- **Jenkins:** `/jenkins/*` (e.g., for triggering builds, checking job status)
+- **Slack:** `/slack/*` (e.g., for sending messages, notifications)
 
-POST /integrations/connect - Connect a service
-GET /integrations/list - List connected services
-DELETE /integrations/{id} - Disconnect service
+## Developer Information
 
-Chat & Workflows
+### Current Limitations
+- **In-memory Storage:** User data and workflow history are stored in memory and will be lost on server restart. Implement a database (e.g., PostgreSQL, MongoDB) for production.
+- **Simulated Service Integrations:** Some service integrations might be simulated. Implement actual API calls for full functionality.
+- **Basic Error Handling:** Error handling is currently basic. Enhance this for robustness in a production environment.
+- **No API Token Encryption:** Sensitive data like API tokens are not encrypted at rest. Implement encryption for production.
 
-POST /chat/process - Process chat message
-GET /workflows/history - Get workflow history
-GET /workflows/{id} - Get workflow details
-POST /workflows/{id}/retry - Retry failed workflow
+### Security Considerations
+- **Data Encryption:** Encrypt sensitive data, including API tokens and user passwords, both in transit (HTTPS) and at rest.
+- **CORS Policy:** Implement and configure a proper Cross-Origin Resource Sharing (CORS) policy.
+- **Rate Limiting:** Add rate limiting to API endpoints to prevent abuse.
+- **HTTPS:** Always use HTTPS in production environments.
+- **Session Management:** Implement secure and robust session management.
+- **Input Validation:** Thoroughly validate and sanitize all user inputs.
 
-Service-Specific Endpoints
+### Future Enhancements / Roadmap
+- Database integration (e.g., PostgreSQL, MongoDB)
+- Full implementation of real service API integrations
+- Advanced workflow orchestration and customization
+- Webhook support for real-time updates from integrated services
+- Multi-tenant support
+- Advanced user and permission management
+- Workflow templates for common tasks
+- Scheduled and recurring workflows
 
-GitHub: /github/* endpoints
-Jira: /jira/* endpoints
-Jenkins: /jenkins/* endpoints
-Slack: /slack/* endpoints
+## Troubleshooting
 
-Development Notes
-Current Limitations
+### Common Issues
 
-In-memory storage (implement database for production)
-Simulated service integrations (implement actual API calls)
-Basic error handling (enhance for production)
-No data encryption for API tokens (implement for production)
+#### CORS Errors
+- Ensure the frontend is served from a web server (e.g., `python -m http.server` or VS Code Live Server) and not opened directly as a `file:///` URL.
+- Verify the CORS configuration in `main.py` (FastAPI backend) allows requests from your frontend's origin.
 
-Security Considerations
+#### API Connection Issues
+- Confirm the backend server is running (typically on `http://localhost:8000`).
+- Double-check the `baseURL` or API endpoint configuration in your frontend JavaScript (`script.js`).
 
-Encrypt sensitive data (API tokens, passwords)
-Implement proper CORS policies
-Add rate limiting
-Use HTTPS in production
-Implement proper session management
+#### Gemini AI Not Working
+- Verify that your `GEMINI_API_KEY` in the `.env` file is correct and active.
+- Check your usage quota and API status in the Google AI Studio.
 
-Future Enhancements
+#### Service Connection Failures
+- Ensure the API credentials (tokens, URLs, usernames) entered for GitHub, Jira, Jenkins, or Slack are accurate.
+- Consult the respective service's API documentation for specific error messages or connection requirements.
+- Verify that the API tokens/keys have the necessary permissions/scopes granted for the intended operations.
 
-Database integration (PostgreSQL/MongoDB)
-Real service API integrations
-Advanced workflow orchestration
-Webhook support for real-time updates
-Multi-tenant support
-Advanced user management
-Workflow templates
-Scheduled workflows
+## Contributing
 
-Troubleshooting
-Common Issues
+We welcome contributions to AutoFlowBot! Please follow these steps:
+1. Fork the repository.
+2. Create a new feature branch (`git checkout -b feature/YourAmazingFeature`).
+3. Make your changes and commit them with clear, descriptive messages.
+4. Test your changes thoroughly.
+5. Push your branch to your fork (`git push origin feature/YourAmazingFeature`).
+6. Open a pull request against the main repository.
 
-CORS Errors
+Please ensure your code adheres to the project's coding standards and includes relevant tests where applicable.
 
-Ensure the frontend is served from a web server, not opened directly as a file
-Check CORS configuration in main.py
+## License
 
+This project is licensed under the MIT License. See the `LICENSE` file for more details.
 
-API Connection Issues
+## Support
 
-Verify the backend is running on port 8000
-Check the baseURL in script.js
-
-
-Gemini AI Not Working
-
-Verify your GEMINI_API_KEY is valid
-Check your Google AI Studio quota
-
-
-Service Connection Failures
-
-Verify API credentials are correct
-Check service-specific API documentation
-Ensure proper permissions are granted
-
-
-
-Contributing
-
-Fork the repository
-Create a feature branch
-Make your changes
-Test thoroughly
-Submit a pull request
-
-License
-This project is licensed under the MIT License.
-Support
-For issues and questions:
-
-Check the troubleshooting section
-Review the API documentation at http://localhost:8000/docs
-Open an issue on the project repository
+If you encounter issues or have questions:
+- First, check the **Troubleshooting** section above.
+- Review the interactive API documentation available at `http://localhost:8000/docs` (once the backend is running).
+- Open an issue on the project's GitHub repository, providing as much detail as possible.
