@@ -8,19 +8,21 @@ from langgraph.graph import END, START, StateGraph
 # Set up Gemini API
 # TODO: Move API keys to environment variables or a secure configuration manager.
 
+
 # Define the state for our graph
 class WorkflowState(TypedDict):
     user_query: str
-    action_type: Optional[str] # e.g., "github_create_issue", "slack_send_message"
+    action_type: Optional[str]  # e.g., "github_create_issue", "slack_send_message"
     repo_name: Optional[str]
     issue_number: Optional[int]
     comment_body: Optional[str]
-    issue_title: Optional[str] # For creating issues
+    issue_title: Optional[str]  # For creating issues
     issue_body: Optional[str]  # For creating issues
-    api_response: Union[Dict[str, Any], None] # To store the response from GitHub/Slack API calls
+    api_response: Union[Dict[str, Any], None]  # To store the response from GitHub/Slack API calls
     error_message: Optional[str]
 
-class LangGraphWorkflowProcessor:
+
+class WorkflowProcessor:
     def __init__(self, gemini_api_key: str, github_token: str, slack_token: str, github_owner: str):
         # TODO: Make GitHub owner dynamic instead of hardcoded.
         self.github_token = github_token
@@ -56,7 +58,7 @@ class LangGraphWorkflowProcessor:
         """Sends a message to a Slack channel."""
         url = "https://slack.com/api/chat.postMessage"
         headers = {"Authorization": f"Bearer {self.slack_token}"}
-        data = {"channel": "#general", "text": user_query} # TODO: Make channel dynamic
+        data = {"channel": "#general", "text": user_query}  # TODO: Make channel dynamic
         response = requests.post(url, json=data, headers=headers)
         return response.json()
 
@@ -141,7 +143,7 @@ class LangGraphWorkflowProcessor:
                 cleaned_response_text = cleaned_response_text[7:]
             if cleaned_response_text.endswith("```"):
                 cleaned_response_text = cleaned_response_text[:-3]
-            
+
             data = json.loads(cleaned_response_text)
             action_type = data.get("action_type", "unhandled")
             params = data.get("params", {})
@@ -153,7 +155,7 @@ class LangGraphWorkflowProcessor:
                 "comment_body": params.get("comment_body"),
                 "issue_title": params.get("issue_title"),
                 "issue_body": params.get("issue_body"),
-                "error_message": None
+                "error_message": None,
             }
         except Exception as e:
             print(f"Error during classification/extraction: {e}")
@@ -164,10 +166,13 @@ class LangGraphWorkflowProcessor:
         repo_name = state.get("repo_name")
         title = state.get("issue_title") or f"Issue from query: {state['user_query'][:50]}..."
         body = state.get("issue_body") or f"Details based on user query: {state['user_query']}"
-        
+
         if not repo_name:
-            return {"api_response": {"error": "Repository name not extracted for creating issue."}, "error_message": "Repo name missing"}
-            
+            return {
+                "api_response": {"error": "Repository name not extracted for creating issue."},
+                "error_message": "Repo name missing",
+            }
+
         response = self._call_create_github_issue(repo_name, title, body)
         print(f"GitHub API Response: {response}")
         return {"api_response": response}
@@ -176,7 +181,10 @@ class LangGraphWorkflowProcessor:
         print("--- Executing GitHub List Issues Node ---")
         repo_name = state.get("repo_name")
         if not repo_name:
-            return {"api_response": {"error": "Repository name not extracted for listing issues."}, "error_message": "Repo name missing"}
+            return {
+                "api_response": {"error": "Repository name not extracted for listing issues."},
+                "error_message": "Repo name missing",
+            }
         response = self._call_list_github_issues(repo_name)
         print(f"GitHub API Response: {response}")
         return {"api_response": response}
@@ -186,7 +194,10 @@ class LangGraphWorkflowProcessor:
         repo_name = state.get("repo_name")
         issue_number = state.get("issue_number")
         if not repo_name or not issue_number:
-            return {"api_response": {"error": "Repo name or issue number not extracted."}, "error_message": "Repo/Issue num missing"}
+            return {
+                "api_response": {"error": "Repo name or issue number not extracted."},
+                "error_message": "Repo/Issue num missing",
+            }
         response = self._call_get_github_issue(repo_name, issue_number)
         print(f"GitHub API Response: {response}")
         return {"api_response": response}
@@ -197,14 +208,17 @@ class LangGraphWorkflowProcessor:
         issue_number = state.get("issue_number")
         comment_body = state.get("comment_body")
         if not repo_name or not issue_number or not comment_body:
-            return {"api_response": {"error": "Repo, issue num, or comment not extracted."}, "error_message": "Params missing for comment"}
+            return {
+                "api_response": {"error": "Repo, issue num, or comment not extracted."},
+                "error_message": "Params missing for comment",
+            }
         response = self._call_comment_on_github_issue(repo_name, issue_number, comment_body)
         print(f"GitHub API Response: {response}")
         return {"api_response": response}
 
     def _slack_message_node(self, state: WorkflowState) -> Dict[str, Any]:
         print("--- Executing Slack Message Node ---")
-        user_query = state["user_query"] # For now, sends the whole query
+        user_query = state["user_query"]  # For now, sends the whole query
         # In a real scenario, you might extract specific message text via Gemini
         response = self._call_send_slack_message(user_query)
         print(f"Slack API Response: {response}")
@@ -237,8 +251,8 @@ class LangGraphWorkflowProcessor:
                 "github_get_issue": "github_get_issue_node",
                 "github_comment_issue": "github_comment_issue_node",
                 "slack_send_message": "slack_message_node",
-                "unhandled": "unhandled_action_node"
-            }
+                "unhandled": "unhandled_action_node",
+            },
         )
 
         workflow_builder.add_edge("github_create_issue_node", END)
@@ -247,7 +261,7 @@ class LangGraphWorkflowProcessor:
         workflow_builder.add_edge("github_comment_issue_node", END)
         workflow_builder.add_edge("slack_message_node", END)
         workflow_builder.add_edge("unhandled_action_node", END)
-        
+
         return workflow_builder.compile()
 
     def _format_response(self, final_state: WorkflowState) -> str:
@@ -255,23 +269,25 @@ class LangGraphWorkflowProcessor:
         api_response = final_state.get("api_response")
         error_message = final_state.get("error_message")
 
-        if error_message: # Prioritize pre-API call errors
+        if error_message:  # Prioritize pre-API call errors
             return f"Error processing your request: {error_message}"
 
         if not api_response:
             return "No API response was received."
 
-        if api_response.get("error"):
+        if isinstance(api_response, dict) and api_response.get("error"):
             return f"API Error ({action_type}): {api_response.get('error')}. Details: {api_response.get('details', 'N/A')}"
 
         if action_type == "github_create_issue":
             if api_response.get("html_url"):
                 return f"Successfully created GitHub issue: {api_response['html_url']}"
             return "GitHub issue creation seems to have failed or returned an unexpected response."
-        
+
         elif action_type == "github_list_issues":
             if isinstance(api_response, list):
-                issues_summary = [f"#{issue['number']} - {issue['title']}" for issue in api_response[:3]] # Show first 3
+                issues_summary = [
+                    f"#{issue['number']} - {issue['title']}" for issue in api_response[:3]
+                ]  # Show first 3
                 summary_str = "\n".join(issues_summary)
                 if len(api_response) > 3:
                     summary_str += f"\n... and {len(api_response) - 3} more."
@@ -293,11 +309,11 @@ class LangGraphWorkflowProcessor:
                 return f"Successfully sent Slack message to channel {api_response.get('channel')} (Timestamp: {api_response.get('ts')})."
             else:
                 return f"Failed to send Slack message. Error: {api_response.get('error', 'Unknown Slack error')}"
-        
+
         elif action_type == "unhandled":
             details = api_response.get("details", "No specific details provided.")
             return f"I couldn't understand or handle your request. Details: {details}"
-            
+
         return f"Action '{action_type}' completed. Raw response: {json.dumps(api_response, indent=2)}"
 
     def process_query(self, user_query: str) -> str:
@@ -311,43 +327,44 @@ class LangGraphWorkflowProcessor:
             "issue_title": None,
             "issue_body": None,
             "api_response": None,
-            "error_message": None
+            "error_message": None,
         }
         final_state = self.app.invoke(initial_state)
         # print(f"--- Internal Final Workflow State --- \n{json.dumps(final_state, indent=2)}") # For debugging
         return self._format_response(final_state)
 
+
 if __name__ == "__main__":
     # TODO: Replace with your actual API keys and configuration from a secure source
-    GEMINI_API_KEY = "<gemini api key>" # Replace with your Gemini API Key
+    GEMINI_API_KEY = "<gemini api key>"  # Replace with your Gemini API Key
     GITHUB_TOKEN = "<your_github_token>"  # Replace with your GitHub token
-    SLACK_TOKEN = "<slack token>" # Replace with your Slack Bot Token
-    GITHUB_OWNER = "<github username>" # TODO: Make this dynamic or configurable
+    SLACK_TOKEN = "<slack token>"  # Replace with your Slack Bot Token
+    GITHUB_OWNER = "<github username>"  # TODO: Make this dynamic or configurable
 
-    if "your_slack_bot_token" in SLACK_TOKEN or "AIzaSy" not in GEMINI_API_KEY or "ghp_" not in GITHUB_TOKEN :
+    if "your_slack_bot_token" in SLACK_TOKEN or "AIzaSy" not in GEMINI_API_KEY or "ghp_" not in GITHUB_TOKEN:
         print("WARNING: Please replace placeholder API keys and tokens in the __main__ block.")
         # You might want to exit or skip execution if keys are not set
 
     try:
-        processor = LangGraphWorkflowProcessor(
+        processor = WorkflowProcessor(
             gemini_api_key=GEMINI_API_KEY,
             github_token=GITHUB_TOKEN,
             slack_token=SLACK_TOKEN,
-            github_owner=GITHUB_OWNER
+            github_owner=GITHUB_OWNER,
         )
 
         queries = [
             "Create an issue in repo cicdrelease about a login bug with details: The login page is broken after the last update.",
             "List issues for repository my-test-app",
-            "Show me details for issue 1 in repo cicdrelease", # Assuming issue 1 exists
-            "Comment on issue #1 in repo cicdrelease saying 'I am looking into this now.'", # Assuming issue 1 exists
+            "Show me details for issue 1 in repo cicdrelease",  # Assuming issue 1 exists
+            "Comment on issue #1 in repo cicdrelease saying 'I am looking into this now.'",  # Assuming issue 1 exists
             "Send a slack message: Hello team, the new build is ready for testing.",
-            "What is the weather today?" # Unhandled
+            "What is the weather today?",  # Unhandled
         ]
 
         for query in queries:
             friendly_response = processor.process_query(query)
-            print(f"\nUser Query: {query}\nResponse: {friendly_response}\n" + "-"*50)
+            print(f"\nUser Query: {query}\nResponse: {friendly_response}\n" + "-" * 50)
 
     except ValueError as e:
         print(f"Initialization Error: {e}")

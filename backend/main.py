@@ -1,10 +1,11 @@
 import logging
 import os
 
-from apis.base import api_router
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+
+from apis.base import api_router
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)

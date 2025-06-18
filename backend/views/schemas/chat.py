@@ -12,4 +12,4 @@ class ChatMessage(BaseModel):
 class ChatResponse(BaseModel):
     response: str
     workflow_id: Optional[str] = None
-    actions_taken: List[str] = []
+    actions_taken: Optional[List[str]] = []
