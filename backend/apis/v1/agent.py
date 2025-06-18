@@ -4,13 +4,16 @@ import uuid
 from datetime import datetime
 from typing import Dict, Optional
 
-from core.security import encrypt_token, integrations_db
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import FileResponse
+
+from core.config import settings
+from core.security import encrypt_token, integrations_db
 from views.api_service import make_service_api_call
 from views.schemas.chat import ChatMessage, ChatResponse
 from views.service_connection import ServiceConnection
 from views.service_validator import ServiceValidator
+from views.workflow_processor import WorkflowProcessor
 from views.workflow_service import (
     execute_workflow_actions,
     get_user_info,
@@ -21,6 +24,8 @@ from views.workflow_service import (
 router = APIRouter(tags=["agent"])
 
 logger = logging.getLogger(__name__)
+
+GEMINI_API_KEY = settings.GEMINI_API_KEY
 
 
 @router.get("/")
@@ -35,9 +40,7 @@ async def serve_frontend():
 @router.get("/health")
 async def health_check():
     """Health check endpoint"""
-    return {"status": "healthy",
-            "timestamp": datetime.utcnow().isoformat(),
-            "version": "1.0.0"}
+    return {"status": "healthy", "timestamp": datetime.utcnow().isoformat(), "version": "1.0.0"}
 
 
 @router.post("/integrations/connect")
@@ -61,7 +64,8 @@ async def connect_service(connection: ServiceConnection, request: Request):
             "user_email": connection.user_email or user_info["email"],
             "service_type": connection.service_type,
             "service_url": connection.service_url,
-            "encrypted_token": encrypt_token(connection.api_token),  # Store encrypted token
+            # "encrypted_token": encrypt_token(connection.api_token),  # Store encrypted token
+            "encrypted_token": connection.api_token,  # Store encrypted token
             "username": connection.username or validation_result.get("username"),
             "config_data": connection.config_data or {},
             "created_at": datetime.utcnow().isoformat(),
@@ -178,21 +182,54 @@ async def process_chat_message(message: ChatMessage, request: Request):
     user_context = {"name": user_name, "email": user_email, "connected_services": connected_services}
     ai_response = await process_with_gemini(message.message, user_context)
 
-    workflow_id = None
-    actions_taken = []
-    if ai_response.get("workflow_needed", False):
-        actions = ai_response.get("actions", [])
-        services = ai_response.get("services_required", [])
-        workflow_title = ai_response.get("workflow_title", "")
+    # get the github token and user from connected services
+    GITHUB_TOKEN = None
+    GITHUB_OWNER = None
+    SLACK_TOKEN = None
 
-        if actions:
-            workflow_id = await execute_workflow_actions(actions, services, user_name, user_email, workflow_title)
-            actions_taken = actions
+    for con in connected_services:
+        if con == "github":
+            github_integration = next(
+                (
+                    i
+                    for i in integrations_db.values()
+                    if i["service_type"] == "github" and i["user_email"] == user_email
+                ),
+                None,
+            )
+            if github_integration:
+                GITHUB_TOKEN = github_integration["encrypted_token"]
+                GITHUB_OWNER = github_integration["username"]
+                print(f"Using GitHub token for {GITHUB_OWNER}: {GITHUB_TOKEN}")
+                break
+
+    processor = WorkflowProcessor(
+        gemini_api_key=GEMINI_API_KEY, github_token=GITHUB_TOKEN, github_owner=GITHUB_OWNER, slack_token=SLACK_TOKEN
+    )
+
+    response = processor.process_query(message.message)
+
+    # workflow_id = None
+    # actions_taken = []
+    # if ai_response.get("workflow_needed", False):
+    #     actions = ai_response.get("actions", [])
+    #     services = ai_response.get("services_required", [])
+    #     workflow_title = ai_response.get("workflow_title", "")
+
+    #     if actions:
+    #         workflow_id = await execute_workflow_actions(actions, services, user_name, user_email, workflow_title)
+    #         actions_taken = actions
+
+    # return ChatResponse(
+    #     response=ai_response.get("response", "I'm here to help with your workflow automation needs!"),
+    #     workflow_id=workflow_id,
+    #     actions_taken=actions_taken,
+    # )
 
     return ChatResponse(
-        response=ai_response.get("response", "I'm here to help with your workflow automation needs!"),
-        workflow_id=workflow_id,
-        actions_taken=actions_taken,
+        response=response,
+        workflow_id=None,
+        actions_taken=[],
     )
 
 
