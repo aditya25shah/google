@@ -43,7 +43,7 @@
 
 /* Body and Background */
 body {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 75%, #f5576c 100%);
+    background: white;
     background-size: 400% 400%;
     animation: gradientShift 15s ease infinite;
     min-height: 100vh;
@@ -702,8 +702,8 @@ body{
                         </div>
                         <h3 class="text-2xl font-bold text-black-900">AutoFlowBot Assistant</h3>
                     </div>
-                    <div class="glass-effect rounded-2xl shadow-lg border border-white/20 overflow-hidden h-[600px]">
-                        <div id="chat-messages" class="chat-messages h-[500px] overflow-y-auto p-6 space-y-4">
+                    <div class="glass-effect rounded-2xl shadow-lg border border-white/20 overflow-hidden h-[780px]">
+                        <div id="chat-messages" class="chat-messages h-[700px] overflow-y-auto p-6 space-y-4">
                             <div class="flex items-start space-x-3">
                                 <div class="w-8 h-8 bg-primary-600 rounded-full flex items-center justify-center flex-shrink-0">
                                     <i class="fas fa-robot text-white text-sm"></i>
@@ -723,7 +723,7 @@ body{
                         <div class="border-t border-black-200 p-4">
                             <div class="flex space-x-3">
                                 <input type="text" id="chat-input" placeholder="Type your automation command..." disabled
-                                       class="flex-1 px-4 py-3 border border-black-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition duration-200 bg-white/80">
+                                class="flex-1 px-4 py-3 border-[2px] border-black rounded-xl bg-white text-black focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition duration-200">
                                 <button id="send-btn" disabled
                                         class="px-6 py-3 bg-primary-600 hover:bg-primary-700 text-black rounded-xl transition duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed">
                                     <i class="fas fa-paper-plane"></i>

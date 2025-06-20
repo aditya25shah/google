@@ -104,56 +104,35 @@ class WorkflowProcessor:
         
         # Enhanced prompt with better natural language understanding
         prompt = f"""
-        You are a smart assistant DevCascade that understands user requests and converts them to structured actions.
-        
+        You are DevCascade, a smart assistant that understands user requests for DevOps automation.
+
         User said: "{user_query}"
-        
-        Your job is to understand what the user wants to do and extract the relevant information.
-        
-        Here are the actions I can perform:
-        
-        1. CREATE GITHUB ISSUE: When user wants to create, raise, open, or make a new issue/bug/ticket
-           - Keywords to look for: create, raise, open, make, new, issue, bug, ticket, problem, feature request
-           - Examples: "create an issue", "raise a bug", "open a ticket", "make a new issue", "report a problem"
-        
-        2. LIST GITHUB ISSUES: When user wants to see, list, show, or view existing issues
-           - Keywords: list, show, see, view, display, get all, fetch, what are the issues
-           - Examples: "show me issues", "list all bugs", "what issues are there", "see problems"
-        
-        3. GET SPECIFIC GITHUB ISSUE: When user wants details about a specific issue number
-           - Keywords: get, show, details, info, tell me about + issue number
-           - Examples: "show issue 123", "get details of #45", "tell me about issue 67"
-        
-        4. COMMENT ON GITHUB ISSUE: When user wants to add comment to an issue
-           - Keywords: comment, add comment, reply, respond + issue number
-           - Examples: "comment on issue 123", "add a comment to #45", "reply to issue 67"
-        
-        5. SEND SLACK MESSAGE: When user wants to send message, notify team, or communicate
-           - Keywords: send, message, notify, tell team, slack, communicate, inform
-           - Examples: "send a message", "notify the team", "tell everyone", "slack this"
-        
-        For REPOSITORY NAMES, look for:
-        - After words like: repo, repository, project, in, to, for
-        - Repository names are usually: single words, hyphenated, or with underscores
-        - Examples: "repo my-app", "in project-x", "to the backend-service repository"
-        
-        For ISSUE NUMBERS, look for:
-        - Numbers after: issue, #, bug, ticket
-        - Examples: "issue 123", "#45", "bug 67", "ticket 89"
-        
-        Analyze the user's request and respond ONLY with a simple action and parameters. DO NOT use JSON format.
-        
-        Respond in this exact format:
-        ACTION: [one of: github_create_issue, github_list_issues, github_get_issue, github_comment_issue, slack_send_message, unhandled]
-        REPO: [repository name if mentioned, or null]
-        ISSUE_NUMBER: [issue number if mentioned, or null]
-        ISSUE_TITLE: [inferred title for new issues, or null]
-        ISSUE_BODY: [description if provided, or null]
-        COMMENT: [comment text if adding comment, or null]
-        MESSAGE: [message text for slack, or the original query]
-        
-        Be flexible and understanding. Even if the user doesn't use exact keywords, try to understand their intent.
-        """
+
+IMPORTANT: When users want to create an issue, they might describe:
+1. The PROBLEM/BUG they want to report (extract this as the issue content)
+2. WHERE to create it (repository name)
+
+Examples:
+- "raise an issue in repo gc-adi about login bug" → Issue about login bug in gc-adi repo
+- "create issue in backend: API is returning 500 errors" → Issue about API errors in backend repo
+- "report bug in frontend that buttons don't work" → Issue about button bug in frontend repo
+
+For CREATE ISSUE requests, identify:
+- WHAT is the actual problem/issue to report (not the command itself)
+- WHERE to create it (repository)
+
+If the user just says "raise an issue in repo X" without specifying WHAT issue, ask them what problem they want to report.
+
+Respond in this exact format:
+ACTION: [github_create_issue, github_list_issues, github_get_issue, github_comment_issue, slack_send_message, general_response, unhandled]
+REPO: [repository name or null]
+ISSUE_NUMBER: [issue number or null]
+ISSUE_TITLE: [short title describing the actual problem, not the command]
+ISSUE_BODY: [detailed description of the problem, not the user's command]
+COMMENT: [comment text if adding comment, or null]
+MESSAGE: [message text for slack, or null]
+CLARIFICATION_NEEDED: [yes if user needs to specify what issue to create, or no]
+"""
         
         try:
             response = self.model.generate_content(prompt)
@@ -173,7 +152,18 @@ class WorkflowProcessor:
             print(f"Error during classification/extraction: {e}")
             # Fallback to simple pattern matching
             return self._fallback_classification(user_query)
-
+    def _needs_clarification_node(self, state: WorkflowState) -> Dict[str, Any]:
+        """Handle cases where user intent needs clarification"""
+        print("--- Requesting Clarification ---")
+        repo_name = state.get("repo_name", "the repository")
+    
+        return {
+        "api_response": {
+            "message": f"I understand you want to create an issue in {repo_name}. What specific problem or feature would you like to report?",
+            "type": "clarification_request",
+            "context": "issue_creation"
+        }
+    }
     def _general_response_node(self, state: WorkflowState) -> Dict[str, Any]:
         """Handle general conversation using Gemini"""
         print("--- Executing General Response Node ---")
@@ -215,6 +205,7 @@ class WorkflowProcessor:
             "issue_title": None,
             "issue_body": None,
             "error_message": None,
+            "needs_clarification": False,
         }
         
         for line in lines:
@@ -251,7 +242,7 @@ class WorkflowProcessor:
     # Check for conversational/greeting patterns first
         greeting_patterns = ['hello', 'hi', 'hey', 'howdy', 'greetings', 'good morning', 'good afternoon', 'good evening']
         question_patterns = ['how are you', 'what can you do', 'help', 'what is', 'tell me about', 'explain']
-    
+        
     # Check if it's a greeting or general conversation
         if any(greeting in query_lower for greeting in greeting_patterns):
             return {
@@ -263,6 +254,7 @@ class WorkflowProcessor:
                 "issue_body": None,
                 "error_message": None,
             }
+        
     
     # Check if it's a general question
         if any(question in query_lower for question in question_patterns):
@@ -275,34 +267,39 @@ class WorkflowProcessor:
                 "issue_body": None,
                 "error_message": None,
             }
-    
-    # Common patterns for creating issues
         create_patterns = ['create', 'raise', 'open', 'make', 'new', 'add']
         issue_patterns = ['issue', 'bug', 'ticket', 'problem', 'feature']
-    
-    # Common patterns for listing
         list_patterns = ['list', 'show', 'see', 'view', 'display', 'get all', 'what are']
-    
-    # Common patterns for slack
         slack_patterns = ['send', 'message', 'notify', 'tell', 'slack', 'inform']
-    
-    # Try to extract repo name
         repo_name = self._extract_repo_name(user_query)
-    
-    # Try to extract issue number
         issue_number = self._extract_issue_number(user_query)
-    
-    # Determine action
         if any(create in query_lower for create in create_patterns) and any(issue in query_lower for issue in issue_patterns):
-            return {
-                "action_type": "github_create_issue",
+        # Try to extract the actual issue content
+            issue_content = self._extract_issue_content(user_query)
+        
+            if not issue_content:
+            # User didn't specify what issue to create - need clarification
+                return {
+                "action_type": "needs_clarification",
                 "repo_name": repo_name,
                 "issue_number": None,
                 "comment_body": None,
-                "issue_title": f"Issue from: {user_query[:50]}...",
-                "issue_body": f"Details: {user_query}",
+                "issue_title": None,
+                "issue_body": None,
                 "error_message": None,
+                "needs_clarification": True,
             }
+        
+        # User specified what issue to create
+            return {
+            "action_type": "github_create_issue",
+            "repo_name": repo_name,
+            "issue_number": None,
+            "comment_body": None,
+            "issue_title": issue_content["title"],
+            "issue_body": issue_content["body"],
+            "error_message": None,
+        }
         elif any(list_word in query_lower for list_word in list_patterns) and any(issue in query_lower for issue in issue_patterns):
             return {
                 "action_type": "github_list_issues",
@@ -354,7 +351,26 @@ class WorkflowProcessor:
             "issue_body": None,
             "error_message": None,
         }
-
+    def _extract_issue_content(self, query: str) -> Dict[str, str]:
+        """Extract actual issue content from user query"""
+    # Patterns to identify issue content
+        content_patterns = [
+        r'about\s+(.+?)(?:\s+in\s+|\s*$)',  # "about login bug"
+        r':\s*(.+?)(?:\s+in\s+|\s*$)',      # ": API is broken"
+        r'that\s+(.+?)(?:\s+in\s+|\s*$)',   # "that buttons don't work"
+        r'with\s+(.+?)(?:\s+in\s+|\s*$)',   # "with connection issues"
+        ]
+    
+        for pattern in content_patterns:
+            match = re.search(pattern, query, re.IGNORECASE)
+            if match:
+                content = match.group(1).strip()
+            # Create title and body from extracted content
+                title = content[:50] + "..." if len(content) > 50 else content
+                body = f"Issue details: {content}\n\nReported via DevCascade automation."
+                return {"title": title, "body": body}
+    
+        return None  # No content found
     def _extract_repo_name(self, query: str) -> str:
         """Extract repository name from query using patterns"""
         import re
@@ -488,6 +504,7 @@ class WorkflowProcessor:
         workflow_builder.add_node("slack_message_node", self._slack_message_node)
         workflow_builder.add_node("unhandled_action_node", self._unhandled_action_node)
         workflow_builder.add_node("general_response_node", self._general_response_node)
+        workflow_builder.add_node("needs_clarification_node", self._needs_clarification_node)
         workflow_builder.set_entry_point("classify_and_extract")
 
         workflow_builder.add_conditional_edges(
@@ -501,6 +518,7 @@ class WorkflowProcessor:
                 "slack_send_message": "slack_message_node",
                 "unhandled": "unhandled_action_node",
                 "general_response": "general_response_node",
+                "needs_clarification": "needs_clarification_node",
             },
         )
 
@@ -511,6 +529,7 @@ class WorkflowProcessor:
         workflow_builder.add_edge("slack_message_node", END)
         workflow_builder.add_edge("unhandled_action_node", END)
         workflow_builder.add_edge("general_response_node", END)
+        workflow_builder.add_edge("needs_clarification_node", END)
         return workflow_builder.compile()
 
     def _format_response(self, final_state: WorkflowState) -> str:

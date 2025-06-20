@@ -22,6 +22,7 @@ def get_user_info(request: Request) -> Dict[str, str]:
     return {
         "name": request.headers.get("X-User-Name", "Anonymous User"),
         "email": request.headers.get("X-User-Email", "user@example.com"),
+        "github_username": request.headers.get("X-GitHub-Username", ""),
     }
 
 
@@ -48,6 +49,9 @@ You are DevCascade, an intelligent and conversational DevOps assistant with dual
 
 ## User Context
 User: {user_context.get('name', 'Team Member')}
+Email: {user_context.get('email', 'Not available')}
+GitHub Username: {user_context.get('github_username', 'Not available')}
+Github Email: {user_context.get('github_email', 'Not available')}
 Role: {user_context.get('role', 'Developer')}
 Connected Services: {', '.join(user_context.get('connected_services', []))}
 Current Project: {user_context.get('current_project', 'Not specified')}
