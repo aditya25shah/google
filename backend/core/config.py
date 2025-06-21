@@ -8,7 +8,7 @@ env_dir = Path(__file__).resolve().parent.parent
 
 env_file = os.path.join(env_dir, ".env")
 
-
+DB_PATH = os.getenv('DB_PATH', 'devcascade_conversations.db')
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=env_file,

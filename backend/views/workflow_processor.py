@@ -20,7 +20,9 @@ class WorkflowState(TypedDict):
     issue_body: Optional[str]  # For creating issues
     api_response: Union[Dict[str, Any], None]  # To store the response from GitHub/Slack API calls
     error_message: Optional[str]
-
+    branch_name: Optional[str]  # For future use, e.g., for GitHub branches
+    branch_list: Optional[Dict[str, Any]]  # For storing branch details if needed
+    error_message: Optional[str]
 
 class WorkflowProcessor:
     def __init__(self, gemini_api_key: str, github_token: str, slack_token: str, github_owner: str):
@@ -37,6 +39,55 @@ class WorkflowProcessor:
         self.app = self._build_graph()
 
     # --- GitHub API Helper Functions ---
+    def _call_list_github_branches(self, repo_name: str) -> Dict[str, Any]:
+        """Lists all branches for a GitHub repository."""
+        if not repo_name:
+            return {"error": "Repository name not provided"}
+        url = f"https://api.github.com/repos/{self.github_owner}/{repo_name}/branches"
+        headers = {"Authorization": f"token {self.github_token}"}
+        response = requests.get(url, headers=headers)
+        if response.status_code != 200:
+            return {"error": f"GitHub API Error: {response.status_code}", "details": response.text}
+        return response.json()
+
+    def _call_get_github_branch(self, repo_name: str, branch_name: str) -> Dict[str, Any]:
+        """Gets details for a specific GitHub branch."""
+        if not repo_name or not branch_name:
+            return {"error": "Repository name or branch name not provided"}
+        url = f"https://api.github.com/repos/{self.github_owner}/{repo_name}/branches/{branch_name}"
+        headers = {"Authorization": f"token {self.github_token}"}
+        response = requests.get(url, headers=headers)
+        if response.status_code != 200:
+            return {"error": f"GitHub API Error: {response.status_code}", "details": response.text}
+        return response.json()
+
+    def _call_create_github_branch(self, repo_name: str, branch_name: str, source_branch: str = "main") -> Dict[str, Any]:
+        """Creates a new branch from a source branch."""
+        if not repo_name or not branch_name:
+            return {"error": "Repository name or branch name not provided"}
+        
+        # First, get the SHA of the source branch
+        source_url = f"https://api.github.com/repos/{self.github_owner}/{repo_name}/git/refs/heads/{source_branch}"
+        headers = {"Authorization": f"token {self.github_token}"}
+        source_response = requests.get(source_url, headers=headers)
+        
+        if source_response.status_code != 200:
+            return {"error": f"Could not find source branch '{source_branch}'", "details": source_response.text}
+        
+        source_sha = source_response.json()["object"]["sha"]
+        
+        # Create the new branch
+        create_url = f"https://api.github.com/repos/{self.github_owner}/{repo_name}/git/refs"
+        create_data = {
+            "ref": f"refs/heads/{branch_name}",
+            "sha": source_sha
+        }
+        create_response = requests.post(create_url, json=create_data, headers=headers)
+        
+        if create_response.status_code not in [200, 201]:
+            return {"error": f"GitHub API Error: {create_response.status_code}", "details": create_response.text}
+        return create_response.json()
+    
     def _call_create_github_issue(self, repo_name: str, title: str, body: str) -> Dict[str, Any]:
         """Creates a GitHub issue dynamically based on user query."""
         if not repo_name:
@@ -117,6 +168,12 @@ Examples:
 - "create issue in backend: API is returning 500 errors" → Issue about API errors in backend repo
 - "report bug in frontend that buttons don't work" → Issue about button bug in frontend repo
 
+BRANCH OPERATIONS:
+- "list branches in repo X" → List all branches in repository X
+- "show branch feature-login in repo X" → Get details for specific branch
+- "create branch hotfix-123 from main in repo X" → Create new branch from source
+- "what branches exist in repo X" → List all branches
+
 For CREATE ISSUE requests, identify:
 - WHAT is the actual problem/issue to report (not the command itself)
 - WHERE to create it (repository)
@@ -124,13 +181,15 @@ For CREATE ISSUE requests, identify:
 If the user just says "raise an issue in repo X" without specifying WHAT issue, ask them what problem they want to report.
 
 Respond in this exact format:
-ACTION: [github_create_issue, github_list_issues, github_get_issue, github_comment_issue, slack_send_message, general_response, unhandled]
+ACTION: [github_create_issue, github_list_issues, github_get_issue, github_comment_issue, github_list_branches, github_get_branch, github_create_branch, slack_send_message, general_response, unhandled]
 REPO: [repository name or null]
 ISSUE_NUMBER: [issue number or null]
 ISSUE_TITLE: [short title describing the actual problem, not the command]
 ISSUE_BODY: [detailed description of the problem, not the user's command]
 COMMENT: [comment text if adding comment, or null]
 MESSAGE: [message text for slack, or null]
+BRANCH_NAME: [branch name for branch operations, or null]
+SOURCE_BRANCH: [source branch for creating new branch, or null]
 CLARIFICATION_NEEDED: [yes if user needs to specify what issue to create, or no]
 """
         
@@ -229,6 +288,13 @@ CLARIFICATION_NEEDED: [yes if user needs to specify what issue to create, or no]
             elif line.startswith("ISSUE_BODY:"):
                 body = line.split(":", 1)[1].strip()
                 parsed["issue_body"] = body if body.lower() != "null" else None
+            elif line.startswith("BRANCH_NAME:"):
+                branch = line.split(":", 1)[1].strip()
+                parsed["branch_name"] = branch if branch.lower() != "null" else None
+            elif line.startswith("SOURCE_BRANCH:"):
+                source = line.split(":", 1)[1].strip()
+                parsed["source_branch"] = source if source.lower() != "null" else None
+            
             elif line.startswith("COMMENT:"):
                 comment = line.split(":", 1)[1].strip()
                 parsed["comment_body"] = comment if comment.lower() != "null" else None
@@ -271,6 +337,9 @@ CLARIFICATION_NEEDED: [yes if user needs to specify what issue to create, or no]
         issue_patterns = ['issue', 'bug', 'ticket', 'problem', 'feature']
         list_patterns = ['list', 'show', 'see', 'view', 'display', 'get all', 'what are']
         slack_patterns = ['send', 'message', 'notify', 'tell', 'slack', 'inform']
+        branch_patterns = ['branch', 'branches']
+        list_branch_patterns = ['list', 'show', 'see', 'view', 'display', 'get all', 'what']
+        create_branch_patterns = ['create', 'make', 'new', 'add']
         repo_name = self._extract_repo_name(user_query)
         issue_number = self._extract_issue_number(user_query)
         if any(create in query_lower for create in create_patterns) and any(issue in query_lower for issue in issue_patterns):
@@ -340,7 +409,46 @@ CLARIFICATION_NEEDED: [yes if user needs to specify what issue to create, or no]
                 "issue_body": None,
                 "error_message": None,
             }
-    
+        elif any(branch in query_lower for branch in branch_patterns):
+            branch_name = self._extract_branch_name(user_query)
+            
+            if any(create in query_lower for create in create_branch_patterns):
+                source_branch = self._extract_source_branch(user_query)
+                return {
+                    "action_type": "github_create_branch",
+                    "repo_name": repo_name,
+                    "branch_name": branch_name,
+                    "source_branch": source_branch or "main",
+                    "issue_number": None,
+                    "comment_body": None,
+                    "issue_title": None,
+                    "issue_body": None,
+                    "error_message": None,
+                }
+            elif any(list_word in query_lower for list_word in list_branch_patterns):
+                return {
+                    "action_type": "github_list_branches",
+                    "repo_name": repo_name,
+                    "branch_name": None,
+                    "source_branch": None,
+                    "issue_number": None,
+                    "comment_body": None,
+                    "issue_title": None,
+                    "issue_body": None,
+                    "error_message": None,
+                }
+            elif branch_name:
+                return {
+                    "action_type": "github_get_branch",
+                    "repo_name": repo_name,
+                    "branch_name": branch_name,
+                    "source_branch": None,
+                    "issue_number": None,
+                    "comment_body": None,
+                    "issue_title": None,
+                    "issue_body": None,
+                    "error_message": None,
+                }
     # If nothing matches, it's probably a general conversation
         return {
             "action_type": "general_response",
@@ -409,7 +517,49 @@ CLARIFICATION_NEEDED: [yes if user needs to specify what issue to create, or no]
                     continue
         
         return None
+    def _extract_branch_name(self, query: str) -> str:
+        """Extract branch name from query using patterns"""
+        import re
+        
+        patterns = [
+            r'branch\s+([a-zA-Z0-9_/-]+)',
+            r'on\s+([a-zA-Z0-9_/-]+)\s+branch',
+            r'switch\s+to\s+([a-zA-Z0-9_/-]+)',
+            r'checkout\s+([a-zA-Z0-9_/-]+)',
+        ]
+        
+        for pattern in patterns:
+            match = re.search(pattern, query, re.IGNORECASE)
+            if match:
+                return match.group(1)
+        
+        return None
 
+    def _extract_source_branch(self, query: str) -> str:
+        """Extract source branch name from query"""
+        import re
+        
+        patterns = [
+            r'from\s+([a-zA-Z0-9_/-]+)',
+            r'based\s+on\s+([a-zA-Z0-9_/-]+)',
+            r'off\s+([a-zA-Z0-9_/-]+)',
+        ]
+        
+        for pattern in patterns:
+            match = re.search(pattern, query, re.IGNORECASE)
+            if match:
+                return match.group(1)
+        
+        return None
+    
+    def _extract_branch_name(self, query: str) -> str:
+        """Extract branch name from query"""
+        patterns = [
+            r'branch\s+([a-zA-Z0-9_/-]+)',
+            r'on\s+([a-zA-Z0-9_/-]+)\s+branch',
+            r'from\s+([a-zA-Z0-9_/-]+)'
+    ]
+    # ... pattern matching logic
     def _create_issue_node(self, state: WorkflowState) -> Dict[str, Any]:
         print("--- Executing GitHub Create Issue Node ---")
         repo_name = state.get("repo_name")
@@ -472,7 +622,47 @@ CLARIFICATION_NEEDED: [yes if user needs to specify what issue to create, or no]
         response = self._call_send_slack_message(user_query)
         print(f"Slack API Response: {response}")
         return {"api_response": response}
+    def _list_branches_node(self, state: WorkflowState) -> Dict[str, Any]:
+        print("--- Executing GitHub List Branches Node ---")
+        repo_name = state.get("repo_name")
+        if not repo_name:
+            return {
+                "api_response": {"error": "Repository name not extracted for listing branches."},
+                "error_message": "Repo name missing",
+            }
+        response = self._call_list_github_branches(repo_name)
+        print(f"GitHub API Response: {response}")
+        return {"api_response": response}
 
+    def _get_branch_node(self, state: WorkflowState) -> Dict[str, Any]:
+        print("--- Executing GitHub Get Branch Node ---")
+        repo_name = state.get("repo_name")
+        branch_name = state.get("branch_name")
+        if not repo_name or not branch_name:
+            return {
+                "api_response": {"error": "Repository name or branch name not extracted."},
+                "error_message": "Repo/Branch name missing",
+            }
+        response = self._call_get_github_branch(repo_name, branch_name)
+        print(f"GitHub API Response: {response}")
+        return {"api_response": response}
+
+    def _create_branch_node(self, state: WorkflowState) -> Dict[str, Any]:
+        print("--- Executing GitHub Create Branch Node ---")
+        repo_name = state.get("repo_name")
+        branch_name = state.get("branch_name")
+        source_branch = state.get("source_branch", "main")
+        
+        if not repo_name or not branch_name:
+            return {
+                "api_response": {"error": "Repository name or branch name not extracted."},
+                "error_message": "Repo/Branch name missing",
+            }
+        
+        response = self._call_create_github_branch(repo_name, branch_name, source_branch)
+        print(f"GitHub API Response: {response}")
+        return {"api_response": response}
+    
     def _unhandled_action_node(self, state: WorkflowState) -> Dict[str, Any]:
         print("--- Executing Unhandled Action Node ---")
         error_msg = state.get("error_message", "The user query could not be handled by available actions.")
@@ -505,6 +695,9 @@ CLARIFICATION_NEEDED: [yes if user needs to specify what issue to create, or no]
         workflow_builder.add_node("unhandled_action_node", self._unhandled_action_node)
         workflow_builder.add_node("general_response_node", self._general_response_node)
         workflow_builder.add_node("needs_clarification_node", self._needs_clarification_node)
+        workflow_builder.add_node("github_list_branches_node", self._list_branches_node)
+        workflow_builder.add_node("github_get_branch_node", self._get_branch_node)
+        workflow_builder.add_node("github_create_branch_node", self._create_branch_node)
         workflow_builder.set_entry_point("classify_and_extract")
 
         workflow_builder.add_conditional_edges(
@@ -519,6 +712,9 @@ CLARIFICATION_NEEDED: [yes if user needs to specify what issue to create, or no]
                 "unhandled": "unhandled_action_node",
                 "general_response": "general_response_node",
                 "needs_clarification": "needs_clarification_node",
+                "github_list_branches": "github_list_branches_node",
+                "github_get_branch": "github_get_branch_node",
+                "github_create_branch": "github_create_branch_node",
             },
         )
 
@@ -530,6 +726,9 @@ CLARIFICATION_NEEDED: [yes if user needs to specify what issue to create, or no]
         workflow_builder.add_edge("unhandled_action_node", END)
         workflow_builder.add_edge("general_response_node", END)
         workflow_builder.add_edge("needs_clarification_node", END)
+        workflow_builder.add_edge("github_list_branches_node", END)
+        workflow_builder.add_edge("github_get_branch_node", END)
+        workflow_builder.add_edge("github_create_branch_node", END)
         return workflow_builder.compile()
 
     def _format_response(self, final_state: WorkflowState) -> str:
@@ -588,6 +787,29 @@ CLARIFICATION_NEEDED: [yes if user needs to specify what issue to create, or no]
             if api_response and api_response.get("message"):
                 return api_response["message"]
             return "Hello! How can I help you today?"
+        elif action_type == "github_list_branches":
+            if isinstance(api_response, list):
+                branches_summary = [
+                    f"• {branch['name']}" + (f" (default)" if branch.get('protected') else "")
+                    for branch in api_response[:10]  # Show first 10
+                ]
+                summary_str = "\n".join(branches_summary)
+                if len(api_response) > 10:
+                    summary_str += f"\n... and {len(api_response) - 10} more."
+                return f"🌿 Found {len(api_response)} branches in repo '{final_state.get('repo_name')}':\n{summary_str}"
+            return "❌ Could not retrieve or parse the list of GitHub branches."
+
+        elif action_type == "github_get_branch":
+            if api_response.get("name"):
+                commit_sha = api_response.get("commit", {}).get("sha", "Unknown")[:8]
+                return f"🌿 Details for branch '{api_response['name']}' in repo '{final_state.get('repo_name')}':\nLatest commit: {commit_sha}\nProtected: {api_response.get('protected', False)}"
+            return "❌ Could not retrieve details for the GitHub branch."
+
+        elif action_type == "github_create_branch":
+            if api_response.get("ref"):
+                branch_name = api_response["ref"].replace("refs/heads/", "")
+                return f"✅ Successfully created branch '{branch_name}' in repo '{final_state.get('repo_name')}' from '{final_state.get('source_branch', 'main')}'"
+            return "❌ GitHub branch creation seems to have failed or returned an unexpected response."
         
         return f"Action '{action_type}' completed. Raw response: {json.dumps(api_response, indent=2)}"
 
@@ -633,9 +855,13 @@ if __name__ == "__main__":
         queries = [
             "Create an issue in repo cicdrelease about a login bug with details: The login page is broken after the last update.",
             "List issues for repository my-test-app",
-            "Show me details for issue 1 in repo cicdrelease",  # Assuming issue 1 exists
-            "Comment on issue #1 in repo cicdrelease saying 'I am looking into this now.'",  # Assuming issue 1 exists
+            "Show me details for issue 1 in repo cicdrelease",
+            "Comment on issue #1 in repo cicdrelease saying 'I am looking into this now.'",
             "Send a slack message: Hello team, the new build is ready for testing.",
+            "List branches in repo cicdrelease",  # NEW
+            "Show branch main in repo cicdrelease",  # NEW
+            "Create branch feature-auth from main in repo cicdrelease",  # NEW
+            "What branches exist in my-test-app repository",  # NEW
             "What is the weather today?",  # Unhandled
         ]
 
