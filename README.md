@@ -1,6 +1,6 @@
-# AutoFlowBot - Your Intelligent Workflow Automation Assistant
+# DevCascade - Your Intelligent Workflow Automation Assistant
 
-AutoFlowBot streamlines your development processes by integrating with essential tools like GitHub, Jira, Jenkins, and Slack. Leverage the power of natural language commands to manage complex workflows effortlessly.
+DevCascade streamlines your development processes by integrating with essential tools like GitHub, Jira, Jenkins, and Slack. Leverage the power of natural language commands to manage complex workflows effortlessly.
 
 ## Features
 
@@ -124,9 +124,9 @@ Open http://localhost:3000 in your browser
 - Provide the necessary API credentials when prompted.
 - Services will indicate a "Connected" status once successfully configured.
 
-### 3. Chat with AutoFlowBot
+### 3. Chat with DevCascade
 
-Interact with AutoFlowBot using natural language commands in the chat interface. Examples include:
+Interact with DevCascade using natural language commands in the chat interface. Examples include:
 - "Deploy the latest release to staging"
 - "Create a new GitHub issue for bug fix"
 - "Trigger Jenkins build for main branch"
@@ -213,7 +213,7 @@ The backend exposes the following API endpoints. For detailed interactive docume
 
 ## Contributing
 
-We welcome contributions to AutoFlowBot! Please follow these steps:
+We welcome contributions to DevCascade! Please follow these steps:
 1. Fork the repository.
 2. Create a new feature branch (`git checkout -b feature/YourAmazingFeature`).
 3. Make your changes and commit them with clear, descriptive messages.
