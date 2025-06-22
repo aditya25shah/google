@@ -12,21 +12,21 @@ Instead of manually switching between different platforms to check repositories,
 
 ## Key Features
 
-- ** Natural Language Processing**: Powered by Google's Gemini AI for intelligent command interpretation
-- ** Multi-Service Integration**: Connect and orchestrate GitHub, Jira, Jenkins, and Slack in one platform
-- ** Instant Workflow Execution**: Execute complex operations with simple conversational commands
-- ** Secure Authentication**: Robust user authentication with JWT-based session management
-- ** Real-time Chat Interface**: Interactive bot communication with instant feedback
-- ** Service Management**: Visual dashboard to monitor connection status of all integrated services
+- **Natural Language Processing**: Powered by Google's Gemini AI for intelligent command interpretation
+- **Multi-Service Integration**: Connect and orchestrate GitHub, Jira, Jenkins, and Slack in one platform
+- **Instant Workflow Execution**: Execute complex operations with simple conversational commands
+- **Secure Authentication**: Robust user authentication with JWT-based session management
+- **Real-time Chat Interface**: Interactive bot communication with instant feedback
+- **Service Management**: Visual dashboard to monitor connection status of all integrated services
 
 ##  Advanced Features
 
-- ** Intelligent Context Understanding**: AI analyzes conversation history to provide contextual responses
-- ** Cross-Platform Orchestration**: Coordinate actions across multiple services in a single workflow
-- ** Comprehensive Workflow History**: Track, review, and retry executed workflows with detailed step-by-step logging
-- ** Automatic Retry Mechanisms**: Smart retry logic for failed operations with exponential backoff
-- ** Responsive Design**: Modern, mobile-friendly interface built with Tailwind CSS
-- ** Real-time Notifications**: Instant updates on workflow progress and completion status
+- **Intelligent Context Understanding**: AI analyzes conversation history to provide contextual responses
+- **Cross-Platform Orchestration**: Coordinate actions across multiple services in a single workflow
+- **Comprehensive Workflow History**: Track, review, and retry executed workflows with detailed step-by-step logging
+- **Automatic Retry Mechanisms**: Smart retry logic for failed operations with exponential backoff
+- **Responsive Design**: Modern, mobile-friendly interface built with Tailwind CSS
+- **Real-time Notifications**: Instant updates on workflow progress and completion status
 
 # DevCascade - How It Works
 
@@ -361,7 +361,7 @@ python -m http.server 3000
 - `POST /workflows/{id}/retry`: Retry failed workflow
 
 ### Service-Specific Endpoints
-- **GitHub**: `/github/*` - Repository operations, issue management
+- **GitHub**: `/github/*` - Repository operations, issue management, branches management
 - **Jira**: `/jira/*` - Ticket operations, project management  
 - **Jenkins**: `/jenkins/*` - Build operations, deployment management
 - **Slack**: `/slack/*` - Messaging, notification management
