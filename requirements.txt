@@ -1,4 +1,75 @@
-asyncpg==0.29.0
-SQLAlchemy==2.0.23
+# Core FastAPI Framework
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+
+# Authentication & Security
+pyjwt==2.8.0
+passlib[bcrypt]==1.7.4
+python-multipart==0.0.6
+
+# HTTP Client for API Integrations
+requests==2.31.0
+httpx==0.25.2
+
+# Data Validation & Serialization
+pydantic==2.5.0
+pydantic-settings==2.1.0
+
+# Google Gemini AI Integration
+google-generativeai==0.3.2
+
+# GitHub API Integration
+PyGithub==1.59.1
+
+# Slack API Integration
+slack-sdk==3.26.1
+
+# Jira API Integration
+jira==3.5.2
+
+# Jenkins API Integration
+python-jenkins==1.8.2
+
+# Environment Variables Management
+python-dotenv==1.0.0
+
+# Date and Time Utilities
+python-dateutil==2.8.2
+
+# JSON Web Token Support
+cryptography==41.0.8
+
+# CORS Support
+fastapi-cors==0.0.6
+
+# Logging and Monitoring
+structlog==23.2.0
+
+# Background Tasks (if needed)
+celery==5.3.4
+redis==5.0.1
+
+# Database Support (optional for production)
+sqlalchemy==2.0.23
 alembic==1.13.1
 psycopg2-binary==2.9.9
+
+# WebSocket Support
+websockets==12.0
+
+# Testing (development)
+pytest==7.4.3
+pytest-asyncio==0.21.1
+httpx==0.25.2
+
+# Development Tools
+black==23.11.0
+flake8==6.1.0
+pre-commit==3.6.0
+
+# Async Support
+asyncio==3.4.3
+aiofiles==23.2.1
+
+# Error Tracking (optional)
+sentry-sdk[fastapi]==1.38.0
