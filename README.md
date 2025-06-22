@@ -4,48 +4,108 @@
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.104+-green.svg)](https://fastapi.tiangolo.com)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
+## Table of Contents
+- [Introduction](#introduction)
+- [Key Features](#key-features)
+- [Quick Start](#quick-start)
+- [How It Works](#how-it-works)
+- [Architecture Overview](#architecture-overview)
+- [System Requirements](#system-requirements)
+- [Configuration](#configuration)
+- [API Documentation](#api-documentation)
+- [Contributing](#contributing)
+- [Support](#support)
+
 ## Introduction
 
-DevCascade is a revolutionary AI-powered workflow automation platform designed to streamline development team operations through natural language processing. By integrating seamlessly with essential development tools like GitHub, Jira, Jenkins, and Slack, DevCascade transforms complex multi-step workflows into simple conversational commands.
+DevCascade is a revolutionary AI-powered workflow automation platform that streamlines development team operations through natural language processing. Instead of manually switching between GitHub, Jira, Jenkins, and Slack, simply chat with DevCascade using plain English commands.
 
-Instead of manually switching between different platforms to check repositories, create tickets, trigger builds, or send notifications, developers can simply chat with DevCascade using plain English commands. The platform intelligently understands your intent and executes the necessary actions across all connected services.
+**Transform this:**
+```
+1. Open GitHub → Check repositories
+2. Switch to Jira → Create ticket
+3. Go to Jenkins → Trigger build  
+4. Open Slack → Notify team
+```
+
+**Into this:**
+```
+"Create a bug ticket for login issues, trigger a build for main branch, and notify the dev team"
+```
 
 ## Key Features
 
-- **Natural Language Processing**: Powered by Google's Gemini AI for intelligent command interpretation
-- **Multi-Service Integration**: Connect and orchestrate GitHub, Jira, Jenkins, and Slack in one platform
-- **Instant Workflow Execution**: Execute complex operations with simple conversational commands
-- **Secure Authentication**: Robust user authentication with JWT-based session management
-- **Real-time Chat Interface**: Interactive bot communication with instant feedback
-- **Service Management**: Visual dashboard to monitor connection status of all integrated services
+### **Natural Language Processing**
+Powered by Google's Gemini AI for intelligent command interpretation
 
-##  Advanced Features
+### **Multi-Service Integration** 
+Connect GitHub, Jira, Jenkins, and Slack in one unified platform
 
-- **Intelligent Context Understanding**: AI analyzes conversation history to provide contextual responses
-- **Cross-Platform Orchestration**: Coordinate actions across multiple services in a single workflow
-- **Comprehensive Workflow History**: Track, review, and retry executed workflows with detailed step-by-step logging
-- **Automatic Retry Mechanisms**: Smart retry logic for failed operations with exponential backoff
-- **Responsive Design**: Modern, mobile-friendly interface built with Tailwind CSS
-- **Real-time Notifications**: Instant updates on workflow progress and completion status
+### **Instant Workflow Execution**
+Execute complex operations with simple conversational commands
 
-# DevCascade - How It Works
+### **Secure Authentication**
+Robust JWT-based session management with encrypted API tokens
 
-## Step 1: User Authentication
+### **Real-time Chat Interface**
+Interactive bot communication with instant feedback and progress updates
 
-### Login Process
+### **Service Management Dashboard**
+Visual monitoring of all integrated services with connection status
+
+### **Advanced Features**
+- Intelligent context understanding with conversation history
+- Cross-platform workflow orchestration
+- Comprehensive execution logging and retry mechanisms
+- Mobile-responsive design built with Tailwind CSS
+
+## Quick Start
+
+Get DevCascade running in under 5 minutes:
+
+```bash
+# 1. Clone and setup
+git clone <your-repository-url>
+cd <repository-directory>
+
+# 2. Install dependencies
+pip install -r requirements.txt
+
+# 3. Configure (minimum required)
+cp .env.example .env
+# Edit .env and add your GEMINI_API_KEY
+
+# 4. Start the application
+python main.py
+
+# 5. Open browser
+# Backend: http://localhost:8000
+# Frontend: Open index.html in browser or use Live Server
+```
+
+**First steps after setup:**
+1. Register your account
+2. Connect at least GitHub and Gemini AI
+3. Try: *"Show me my repositories"*
+
+## How It Works
+
+### Step 1: User Authentication
+
+#### Login Process
 Users can register and log in using their email credentials to access the DevCascade platform.
 
-### Session Management
+#### Session Management
 Secure JWT token-based authentication ensures user sessions remain active and protected throughout their usage.
 
-### Profile Creation
+#### Profile Creation
 The system automatically creates personalized user profiles with customized settings upon registration.
 
-## Step 2: Service Connection
+### Step 2: Service Connection
 
 After logging in, users need to connect their development services to enable full functionality:
 
-### Connecting GitHub
+#### Connecting GitHub
 1. Navigate to the integrations section in your dashboard
 2. Click **"Connect GitHub"**
 3. Obtain your GitHub Personal Access Token:
@@ -53,7 +113,7 @@ After logging in, users need to connect their development services to enable ful
    - Generate a new token with appropriate permissions
 4. Enter the token to establish the connection
 
-### Connecting Jira
+#### Connecting Jira
 1. Click **"Connect Jira"** in the integrations panel
 2. Get your Jira API token:
    - Access Jira Account Settings → Security → API Tokens
@@ -63,7 +123,7 @@ After logging in, users need to connect their development services to enable ful
    - Username
    - API token
 
-### Connecting Jenkins
+#### Connecting Jenkins
 1. Select **"Connect Jenkins"** from the available integrations
 2. Generate your Jenkins API token:
    - Go to Jenkins User Settings → Configure → API Token
@@ -73,7 +133,7 @@ After logging in, users need to connect their development services to enable ful
    - Username
    - API token
 
-### Connecting Slack
+#### Connecting Slack
 1. Choose **"Connect Slack"** to enable team communication
 2. Create a Slack app:
    - Visit api.slack.com/apps
@@ -81,101 +141,108 @@ After logging in, users need to connect their development services to enable ful
 3. Install the app to your workspace and copy the Bot User OAuth Token
 4. Enter the token to complete the Slack integration
 
-### Connecting Gemini AI
+![image](https://github.com/user-attachments/assets/d1a9005a-a18a-4390-984d-7a4d139b1a8e)
+
+#### Connecting Gemini AI
 **Required for core functionality**
 1. Visit Google AI Studio at aistudio.google.com/app/apikey
 2. Generate your Gemini API key
 3. Add the key to enable natural language processing capabilities
 
-## Step 3: Using DevCascade
+### Step 3: Using DevCascade
 
 Once all services are connected, you can perform various operations through natural language commands:
 
-### GitHub Operations
+#### GitHub Operations
 
-#### Repository Management
-- **"Show me all repositories in my organization"** - View all repos within your organization
-- **"List my personal repositories"** - Display repositories you own
+**Repository Management**
+- *"Show me all repositories in my organization"* - View all repos within your organization
+- *"List my personal repositories"* - Display repositories you own
 
-#### Branch Information
-- **"How many branches does the main repository have?"** - Get branch count for specific repos
-- **"Show me all branches in [repository-name]"** - View branch details
+**Branch Information**
+- *"How many branches does the main repository have?"* - Get branch count for specific repos
+- *"Show me all branches in [repository-name]"* - View branch details
 
-#### Issue Tracking
-- **"List all open issues assigned to me"** - View your assigned issues
-- **"Show issues with high priority"** - Filter issues by priority level
-- **"Create a new issue for [description]"** - Generate new issues
+**Issue Tracking**
+- *"List all open issues assigned to me"* - View your assigned issues
+- *"Show issues with high priority"* - Filter issues by priority level
+- *"Create a new issue for [description]"* - Generate new issues
 
-#### Commit History
-- **"What are the latest 5 commits in the development branch?"** - View recent commits
-- **"Show commit history for the last week"** - Time-based commit filtering
+**Commit History**
+- *"What are the latest 5 commits in the development branch?"* - View recent commits
+- *"Show commit history for the last week"* - Time-based commit filtering
 
-#### Pull Requests
-- **"Show me pending pull requests that need review"** - View PRs awaiting review
-- **"List my open pull requests"** - Display your submitted PRs
+**Pull Requests**
+- *"Show me pending pull requests that need review"* - View PRs awaiting review
+- *"List my open pull requests"* - Display your submitted PRs
+- 
+![image](https://github.com/user-attachments/assets/73c71d59-6938-4226-8086-f91399e3c11f)
+The Issue he raise :-
 
-### Jira Operations
+![image](https://github.com/user-attachments/assets/262f5e38-bdae-4b72-baa0-752248645447)
 
-#### Ticket Management
-- **"Create a new bug ticket for login issues"** - Generate bug reports
-- **"Show all tickets assigned to me"** - View your assigned work
-- **"Update ticket [TICKET-ID] with progress notes"** - Add updates to existing tickets
+#### Jira Operations
 
-#### Sprint Planning
-- **"Show me all tasks in the current sprint"** - View current sprint backlog
-- **"Move [TICKET-ID] to next sprint"** - Manage sprint assignments
-- **"Create sprint report for team review"** - Generate sprint summaries
+**Ticket Management**
+- *"Create a new bug ticket for login issues"* - Generate bug reports
+- *"Show all tickets assigned to me"* - View your assigned work
+- *"Update ticket [TICKET-ID] with progress notes"* - Add updates to existing tickets
 
-#### Status Updates
-- **"Move ticket PROJ-123 to In Progress"** - Update ticket status
-- **"Mark [TICKET-ID] as completed"** - Close finished work
-- **"Set [TICKET-ID] priority to high"** - Modify ticket priority
+**Sprint Planning**
+- *"Show me all tasks in the current sprint"* - View current sprint backlog
+- *"Move [TICKET-ID] to next sprint"* - Manage sprint assignments
+- *"Create sprint report for team review"* - Generate sprint summaries
 
-#### Reporting
-- **"Generate a summary of completed tasks this week"** - Create progress reports
-- **"Show team velocity for last sprint"** - View performance metrics
-- **"Create burndown chart for current sprint"** - Generate visual reports
+**Status Updates**
+- *"Move ticket PROJ-123 to In Progress"* - Update ticket status
+- *"Mark [TICKET-ID] as completed"* - Close finished work
+- *"Set [TICKET-ID] priority to high"* - Modify ticket priority
 
-### Jenkins Operations
+**Reporting**
+- *"Generate a summary of completed tasks this week"* - Create progress reports
+- *"Show team velocity for last sprint"* - View performance metrics
+- *"Create burndown chart for current sprint"* - Generate visual reports
 
-#### Build Management
-- **"Trigger a build for the main branch"** - Initiate builds on demand
-- **"Start build for [project-name]"** - Build specific projects
-- **"Cancel running build for [job-name]"** - Stop active builds
+#### Jenkins Operations
 
-#### Deployment
-- **"Deploy the latest version to staging environment"** - Push to staging
-- **"Promote staging build to production"** - Production deployments
-- **"Rollback production to previous version"** - Revert deployments
+**Build Management**
+- *"Trigger a build for the main branch"* - Initiate builds on demand
+- *"Start build for [project-name]"* - Build specific projects
+- *"Cancel running build for [job-name]"* - Stop active builds
 
-#### Job Monitoring
-- **"Check the status of the last deployment"** - Monitor deployment progress
-- **"Show me running jobs"** - View active Jenkins jobs
-- **"Get build logs for [job-name]"** - Access detailed build information
+**Deployment**
+- *"Deploy the latest version to staging environment"* - Push to staging
+- *"Promote staging build to production"* - Production deployments
+- *"Rollback production to previous version"* - Revert deployments
 
-#### Build History
-- **"Show me the last 10 build results"** - View recent build outcomes
-- **"Display failed builds from this week"** - Filter by build status
-- **"Generate build report for [project-name]"** - Create build summaries
+**Job Monitoring**
+- *"Check the status of the last deployment"* - Monitor deployment progress
+- *"Show me running jobs"* - View active Jenkins jobs
+- *"Get build logs for [job-name]"* - Access detailed build information
 
-### Slack Operations
+**Build History**
+- *"Show me the last 10 build results"* - View recent build outcomes
+- *"Display failed builds from this week"* - Filter by build status
+- *"Generate build report for [project-name]"* - Create build summaries
 
-#### Team Communication
-- **"Send a deployment notification to the dev team"** - Broadcast deployment updates
-- **"Notify QA team about new build availability"** - Coordinate testing activities
-- **"Share sprint review summary with stakeholders"** - Distribute project updates
+#### Slack Operations
 
-#### Status Updates
-- **"Notify the team about the production release"** - Announce releases
-- **"Send daily standup reminder"** - Facilitate team meetings
-- **"Share code review completion status"** - Update on review progress
+**Team Communication**
+- *"Send a deployment notification to the dev team"* - Broadcast deployment updates
+- *"Notify QA team about new build availability"* - Coordinate testing activities
+- *"Share sprint review summary with stakeholders"* - Distribute project updates
 
-#### Alert Management
-- **"Send an alert about the server downtime"** - Communicate urgent issues
-- **"Notify on-call team about system errors"** - Escalate critical problems
-- **"Create incident notification for database issues"** - Manage incident response
+**Status Updates**
+- *"Notify the team about the production release"* - Announce releases
+- *"Send daily standup reminder"* - Facilitate team meetings
+- *"Share code review completion status"* - Update on review progress
 
-## Getting Started Tips
+**Alert Management**
+- *"Send an alert about the server downtime"* - Communicate urgent issues
+- *"Notify on-call team about system errors"* - Escalate critical problems
+- *"Create incident notification for database issues"* - Manage incident response
+
+#### Getting Started Tips
 
 1. **Complete all integrations** - Ensure all required services are connected for full functionality
 2. **Use natural language** - Speak to DevCascade as you would to a team member
@@ -183,35 +250,23 @@ Once all services are connected, you can perform various operations through natu
 4. **Explore capabilities** - Try different command variations to discover all available features
 5. **Monitor responses** - Review system feedback to understand command success and errors
 
-## Support and Troubleshooting
+#### Support and Troubleshooting
 
 If you encounter issues with service connections or commands, verify that:
 - All API tokens are valid and have appropriate permissions
 - Service URLs are correctly formatted
 - Your account has necessary access rights for the requested operations
 - Network connectivity to integrated services is available
-## 🏗️ Architecture Overview
+
+## Architecture Overview
 
 ### Frontend Layer
 - **Technology**: HTML5, Tailwind CSS, Vanilla JavaScript
-- **Components**: 
-  - Real-time chat interface with WebSocket communication
-  - Service integration dashboard with visual status indicators
-  - Workflow history viewer with expandable execution details
-  - Responsive design optimized for desktop and mobile devices
-- **Features**: 
-  - Dynamic UI updates without page refresh
-  - Interactive service connection management
-  - Real-time workflow progress tracking
+- **Features**: Real-time chat interface, service integration dashboard, workflow history viewer, responsive design
 
 ### Backend Layer
 - **Framework**: FastAPI (Python) with async/await support
-- **Core Components**:
-  - **Authentication System**: JWT-based user management with secure token handling
-  - **AI Processing Engine**: Google Gemini AI integration for natural language understanding
-  - **Service Adapters**: Modular connectors for each integrated service (GitHub, Jira, Jenkins, Slack)
-  - **Workflow Orchestrator**: Manages multi-step operations across different services
-  - **API Gateway**: Centralized endpoint management with rate limiting and validation
+- **Core Components**: JWT authentication, AI processing engine, service adapters, workflow orchestrator, API gateway
 - **Data Storage**: In-memory storage (suitable for development; database recommended for production)
 
 ### Integration Layer
@@ -230,31 +285,7 @@ If you encounter issues with service connections or commands, verify that:
 6. **Progress Updates**: Provides real-time feedback throughout the workflow
 7. **Result Compilation**: Aggregates results and presents comprehensive summary
 
-## 🛠️ Technology Stack
-
-### Backend Technologies
-- **FastAPI**: High-performance, async Python web framework
-- **Google Gemini AI**: Advanced large language model for natural language processing
-- **Uvicorn**: Lightning-fast ASGI server for Python applications
-- **Pydantic**: Data validation and serialization using Python type hints
-- **Python Requests**: HTTP library for external API integrations
-- **JWT (PyJWT)**: JSON Web Tokens for secure authentication
-
-### Frontend Technologies
-- **HTML5**: Modern semantic markup with accessibility features
-- **Tailwind CSS**: Utility-first CSS framework for rapid UI development
-- **Vanilla JavaScript**: Pure JavaScript for DOM manipulation and API communication
-- **WebSocket API**: Real-time bidirectional communication
-- **CSS Grid & Flexbox**: Modern responsive layout techniques
-
-### APIs and Integrations
-- **GitHub REST API v4**: Repository and organization management
-- **Jira REST API v2/v3**: Project management and issue tracking
-- **Jenkins REST API**: Continuous integration and deployment
-- **Slack Web API**: Team communication and collaboration
-- **Google Gemini AI API**: Natural language processing and understanding
-
-## 💻 System Requirements
+## System Requirements
 
 ### Minimum Requirements
 - **Operating System**: Windows 10, macOS 10.14, or Linux (Ubuntu 18.04+)
@@ -263,86 +294,35 @@ If you encounter issues with service connections or commands, verify that:
 - **Storage**: 1GB free disk space
 - **Network**: Stable internet connection for API communications
 
-### Software Dependencies
-- **Python Package Manager**: pip (included with Python)
-- **Web Browser**: Modern browser with JavaScript support
-  - Chrome 90+, Firefox 88+, Safari 14+, Edge 90+
-- **Git**: For repository cloning and version control
+### Technology Stack
 
-### Development Tools (Optional)
-- **VS Code**: Recommended IDE with Live Server extension
-- **Postman**: For API testing and documentation
-- **Python Virtual Environment**: For dependency isolation
+#### Backend Technologies
+- **FastAPI**: High-performance, async Python web framework
+- **Google Gemini AI**: Advanced large language model for natural language processing
+- **Uvicorn**: Lightning-fast ASGI server for Python applications
+- **Pydantic**: Data validation and serialization using Python type hints
 
-## 🚀 Getting Started
+#### Frontend Technologies
+- **HTML5**: Modern semantic markup with accessibility features
+- **Tailwind CSS**: Utility-first CSS framework for rapid UI development
+- **Vanilla JavaScript**: Pure JavaScript for DOM manipulation and API communication
+- **WebSocket API**: Real-time bidirectional communication
 
-### 1. Repository Setup
+## Configuration
+
+### Environment Variables
 ```bash
-# Clone the repository
-git clone <your-repository-url>
-cd <repository-directory>
-
-# Verify Python installation
-python --version  # Should output 3.8 or higher
+# Required
+GEMINI_API_KEY=your_gemini_api_key
 ```
 
-### 2. Backend Setup
+You just need to get an API key from Google AI Studio and you're ready to get started.
 
-#### Install Dependencies
-```bash
-# Install required packages
-pip install -r requirements.txt
+### Development vs Production
+- **Development**: Uses in-memory storage, debug logging enabled
+- **Production**: Requires database setup, secure HTTPS, environment-specific configurations
 
-# Alternative: Using virtual environment (recommended)
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-pip install -r requirements.txt
-```
-
-#### Environment Configuration
-```bash
-# Copy environment template
-cp .env.example .env
-
-# Edit .env file with your API keys
-# At minimum, set GEMINI_API_KEY for core functionality
-```
-
-#### Start Backend Server
-```bash
-# Method 1: Direct execution
-python main.py
-
-# Method 2: Using Uvicorn (recommended)
-uvicorn main:app --reload --host 0.0.0.0 --port 8000
-```
-
-API server will be available at `http://localhost:8000`
-Interactive documentation at `http://localhost:8000/docs`
-
-### 3. Frontend Setup
-
-#### Option 1: VS Code Live Server
-1. Install "Live Server" extension in VS Code
-2. Right-click on `index.html`
-3. Select "Open with Live Server"
-4. Application opens automatically in browser
-
-#### Option 2: Python HTTP Server
-```bash
-# Serve static files
-python -m http.server 3000
-
-# Access application at http://localhost:3000
-```
-
-### 4. First-Time Setup
-1. **Register Account**: Create new user account with email and password
-2. **Connect Services**: Add API keys for desired services (GitHub, Jira, Jenkins, Slack)
-3. **Test Integration**: Send a simple command like "Show me my GitHub repositories"
-4. **Explore Features**: Try different natural language commands to familiarize yourself with capabilities
-
-## 📚 API Documentation
+## API Documentation
 
 ### Authentication Endpoints
 - `POST /auth/register`: Create new user account
@@ -360,27 +340,9 @@ python -m http.server 3000
 - `GET /workflows/{id}`: Get specific workflow details
 - `POST /workflows/{id}/retry`: Retry failed workflow
 
-### Service-Specific Endpoints
-- **GitHub**: `/github/*` - Repository operations, issue management, branches management
-- **Jira**: `/jira/*` - Ticket operations, project management  
-- **Jenkins**: `/jenkins/*` - Build operations, deployment management
-- **Slack**: `/slack/*` - Messaging, notification management
+For complete interactive API documentation, visit `http://localhost:8000/docs` after starting the backend server.
 
-For complete API documentation, visit `http://localhost:8000/docs` after starting the backend server.
-
-## 🔧 Configuration
-
-### Environment Variables
-```bash
-# Required
-GEMINI_API_KEY=your_gemini_api_key
-You just need to get a API key From the Google AI Studio and You are Ready to Get Started.
-
-### Development vs Production
-- **Development**: Uses in-memory storage, debug logging enabled
-- **Production**: Requires database setup, secure HTTPS, environment-specific configurations
-
-## 🤝 Contributing
+## Contributing
 
 1. Fork the repository
 2. Create feature branch (`git checkout -b feature/amazing-feature`)
@@ -388,12 +350,21 @@ You just need to get a API key From the Google AI Studio and You are Ready to Ge
 4. Push to branch (`git push origin feature/amazing-feature`)
 5. Open Pull Request
 
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🆘 Support
+## Support
 
 - **Documentation**: Visit `http://localhost:8000/docs` for API reference
 - **Issues**: Report bugs on GitHub repository
-- **Community**: Join our Discord server for community support
+- **License**: This project is licensed under the MIT License
+
+---
+
+## Get Started Now!
+
+Ready to streamline your development workflow? Get DevCascade running in 5 minutes:
+
+```bash
+git clone <your-repository-url> && cd <repository-directory>
+pip install -r requirements.txt && python main.py
+```
+
+Start chatting with your development tools today! 🚀
