@@ -177,6 +177,7 @@ Once all services are connected, you can perform various operations through natu
 - *"List my open pull requests"* - Display your submitted PRs
 - 
 ![image](https://github.com/user-attachments/assets/73c71d59-6938-4226-8086-f91399e3c11f)
+
 The Issue he raise :-
 
 ![image](https://github.com/user-attachments/assets/262f5e38-bdae-4b72-baa0-752248645447)
