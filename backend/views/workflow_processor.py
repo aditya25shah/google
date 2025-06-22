@@ -1,10 +1,10 @@
 import json
-from typing import Any, Dict, Optional, TypedDict, Union
-
+from typing import Any, Dict, Optional, TypedDict, Union, List
+import httpx
 import google.generativeai as genai
 import requests  # type: ignore
 from langgraph.graph import END, START, StateGraph
-
+import re
 # Set up Gemini API
 # TODO: Move API keys to environment variables or a secure configuration manager.
 
@@ -12,18 +12,23 @@ from langgraph.graph import END, START, StateGraph
 # Define the state for our graph
 class WorkflowState(TypedDict):
     user_query: str
-    action_type: Optional[str]  # e.g., "github_create_issue", "slack_send_message"
+    action_type: Optional[str]  # e.g., "github_create_issue", "slack_send_message", "compound_action"
     repo_name: Optional[str]
     issue_number: Optional[int]
     comment_body: Optional[str]
     issue_title: Optional[str]  # For creating issues
     issue_body: Optional[str]  # For creating issues
     api_response: Union[Dict[str, Any], None]  # To store the response from GitHub/Slack API calls
-    error_message: Optional[str]
+    error_message: Optional[str]  # FIXED: Only one error_message field
     branch_name: Optional[str]  # For future use, e.g., for GitHub branches
     branch_list: Optional[Dict[str, Any]]  # For storing branch details if needed
-    error_message: Optional[str]
-
+    source_branch: Optional[str]  # For branch operations
+    slack_message: Optional[str]  # For Slack messages
+    slack_channel: Optional[str]  # For Slack channel
+    slack_user: Optional[str]  # For Slack user
+    compound_actions: Optional[List[str]]  
+    primary_response: Optional[Dict[str, Any]]  
+    secondary_responses: Optional[List[Dict[str, Any]]] 
 
 class WorkflowProcessor:
     def __init__(self, gemini_api_key: str, github_token: str, slack_token: str, github_owner: str):
@@ -105,70 +110,151 @@ class WorkflowProcessor:
             return {"error": f"GitHub API Error: {response.status_code}", "details": response.text}
         return response.json()
 
+    
     def _call_send_slack_message(self, message: str, channel: str = "#general", user: str = None) -> Dict[str, Any]:
-        """Sends a message to a Slack channel or user. Creates the channel if it does not exist."""
-        url = "https://slack.com/api/chat.postMessage"
-        headers = {"Authorization": f"Bearer {self.slack_token}"}
-        data = {"text": message}
-
-        # If a user is specified, send as DM; else, send to channel
-        if user:
-            # To send a DM, we need the user's ID, not their username.
-            # This requires the `users:read` scope.
-            users_list_url = "https://slack.com/api/users.list"
-            users_list_resp = requests.get(users_list_url, headers=headers)
-            users_list_json = users_list_resp.json()
-
-            if not users_list_json.get("ok"):
-                return {"ok": False, "error": "Could not list Slack users to find DM recipient", "details": users_list_json}
-
-            user_id = None
-            # This doesn't handle pagination for large workspaces, but is a good first step.
-            for member in users_list_json.get("members", []):
-                if member.get("name") == user or member.get("profile", {}).get("display_name") == user:
-                    user_id = member.get("id")
-                    break
-
-            if not user_id:
-                return {"ok": False, "error": f"Could not find Slack user with name '{user}'"}
-
-            conv_url = "https://slack.com/api/conversations.open"
-            conv_data = {"users": user_id}  # Use the found user ID
-            conv_resp = requests.post(conv_url, json=conv_data, headers=headers)
-            conv_json = conv_resp.json()
-            if conv_json.get("ok") and conv_json.get("channel", {}).get("id"):
-                data["channel"] = conv_json["channel"]["id"]
-            else:
-                return {"ok": False, "error": "Could not open DM with user", "details": conv_json}
-        else:
-            # Try to get the channel ID for the given channel name
-            channel_name = channel.lstrip("#")
-            list_url = "https://slack.com/api/conversations.list"
-            list_params = {"exclude_archived": True, "limit": 1000, "types": "public_channel,private_channel"}
-            list_resp = requests.get(list_url, headers=headers, params=list_params)
-            channel_id = None
-            if list_resp.status_code == 200:
-                channels = list_resp.json().get("channels", [])
-                for ch in channels:
-                    if ch.get("name") == channel_name:
-                        channel_id = ch.get("id")
-                        break
-
-            # If channel not found, create it
-            if not channel_id:
-                create_url = "https://slack.com/api/conversations.create"
-                create_data = {"name": channel_name}
-                create_resp = requests.post(create_url, json=create_data, headers=headers)
-                create_json = create_resp.json()
-                if create_json.get("ok") and "channel" in create_json:
-                    channel_id = create_json["channel"]["id"]
+        """Sends a message to a Slack channel or user."""
+        
+        # DEBUG: Print what we're receiving
+        print(f"DEBUG - Message: '{message}'")
+        print(f"DEBUG - Channel: '{channel}'")
+        print(f"DEBUG - User: '{user}'")
+        
+        headers = {
+            "Authorization": f"Bearer {self.slack_token}",
+            "Content-Type": "application/json"
+        }
+        
+        try:
+            with httpx.Client(timeout=10.0) as client:
+                if user:
+                    # Send DM to user
+                    users_response = client.get("https://slack.com/api/users.list", headers=headers)
+                    
+                    if users_response.status_code != 200:
+                        return {"ok": False, "error": f"HTTP error {users_response.status_code} when listing users"}
+                    
+                    users_data = users_response.json()
+                    
+                    if not users_data.get("ok"):
+                        error_msg = users_data.get("error", "Unknown error")
+                        if error_msg == "invalid_auth":
+                            return {"ok": False, "error": "Invalid Slack token"}
+                        return {"ok": False, "error": f"Could not list users: {error_msg}"}
+                    
+                    # Find user ID
+                    user_id = None
+                    for member in users_data.get("members", []):
+                        if (member.get("name") == user or 
+                            member.get("profile", {}).get("display_name") == user or
+                            member.get("real_name") == user):
+                            user_id = member.get("id")
+                            break
+                    
+                    if not user_id:
+                        return {"ok": False, "error": f"User '{user}' not found"}
+                    
+                    # Open DM conversation
+                    dm_response = client.post(
+                        "https://slack.com/api/conversations.open",
+                        json={"users": user_id},
+                        headers=headers
+                    )
+                    
+                    if dm_response.status_code != 200:
+                        return {"ok": False, "error": f"HTTP error {dm_response.status_code} when opening DM"}
+                    
+                    dm_result = dm_response.json()
+                    
+                    if not dm_result.get("ok"):
+                        error_msg = dm_result.get("error", "Unknown error")
+                        return {"ok": False, "error": f"Could not open DM: {error_msg}"}
+                    
+                    channel_id = dm_result.get("channel", {}).get("id")
+                    
                 else:
-                    return {"ok": False, "error": f"Could not find or create channel #{channel_name}", "details": create_json}
+                    # Send to channel - get channel ID
+                    channel_name = channel.lstrip("#")
+                    print(f"DEBUG - Processed channel name: '{channel_name}'")
+                    
+                    # Try public channels first
+                    channels_response = client.get("https://slack.com/api/conversations.list", headers=headers)
+                    
+                    if channels_response.status_code != 200:
+                        return {"ok": False, "error": f"HTTP error {channels_response.status_code} when listing channels"}
+                    
+                    channels_data = channels_response.json()
+                    
+                    if not channels_data.get("ok"):
+                        error_msg = channels_data.get("error", "Unknown error")
+                        if error_msg == "invalid_auth":
+                            return {"ok": False, "error": "Invalid Slack token"}
+                        return {"ok": False, "error": f"Could not list channels: {error_msg}"}
+                    
+                    # Find channel ID in public channels
+                    channel_id = None
+                    for ch in channels_data.get("channels", []):
+                        if ch.get("name") == channel_name:
+                            channel_id = ch.get("id")
+                            break
+                    
+                    # If not found in public channels, try private channels
+                    if not channel_id:
+                        private_channels_response = client.get(
+                            "https://slack.com/api/conversations.list",
+                            headers=headers,
+                            params={"types": "private_channel"}
+                        )
+                        
+                        if private_channels_response.status_code == 200:
+                            private_data = private_channels_response.json()
+                            if private_data.get("ok"):
+                                for ch in private_data.get("channels", []):
+                                    if ch.get("name") == channel_name:
+                                        channel_id = ch.get("id")
+                                        break
+                    
+                    if not channel_id:
+                        return {"ok": False, "error": f"Channel '{channel_name}' not found. Bot may not be added to this channel."}
+                
+                # Send message
+                print(f"DEBUG - Final channel_id: '{channel_id}'")
+                print(f"DEBUG - Final message: '{message}'")
+                
+                message_data = {
+                    "channel": channel_id,
+                    "text": message
+                }
+                
+                message_response = client.post(
+                    "https://slack.com/api/chat.postMessage",
+                    json=message_data,
+                    headers=headers
+                )
+                
+                if message_response.status_code != 200:
+                    return {"ok": False, "error": f"HTTP error {message_response.status_code} when sending message"}
+                
+                result = message_response.json()
+                
+                if not result.get("ok"):
+                    error_msg = result.get("error", "Unknown error")
+                    if error_msg == "invalid_auth":
+                        return {"ok": False, "error": "Invalid Slack token"}
+                    elif error_msg == "channel_not_found":
+                        return {"ok": False, "error": f"Channel not found or bot not added to channel"}
+                    elif error_msg == "not_in_channel":
+                        return {"ok": False, "error": f"Bot is not a member of the channel"}
+                    return {"ok": False, "error": f"Could not send message: {error_msg}"}
+                
+                return result
+                
+        except httpx.TimeoutException:
+            return {"ok": False, "error": "Slack API timeout"}
+        except httpx.RequestError as e:
+            return {"ok": False, "error": f"Slack API connection error: {str(e)}"}
+        except Exception as e:
+            return {"ok": False, "error": f"Unexpected error: {str(e)}"}
 
-            data["channel"] = channel_id
-
-        response = requests.post(url, json=data, headers=headers)
-        return response.json()
 
     def _call_list_github_issues(self, repo_name: str) -> Dict[str, Any]:
         """Lists issues for a given GitHub repository."""
@@ -910,20 +996,39 @@ CLARIFICATION_NEEDED: [yes if user needs to specify what issue to create, or no]
         Extracts Slack message target (user or channel) and message text from the query.
         Returns a dict with keys: 'user', 'channel', 'message'
         """
-        import re
-
-        # Try to extract user mention (e.g., '@john', 'to John', 'to @john')
-        user_match = re.search(r"(?:to|@)\s*@?([a-zA-Z0-9._-]+)", query)
+        
+        print(f"DEBUG: Processing query: '{query}'")
+        
+        result = {'user': None, 'channel': None, 'message': None}
+        
+        # Extract user mention
+        user_match = re.search(r"(?:to|@)\s*@?([a-zA-Z0-9._-]+)", query, re.IGNORECASE)
+        if user_match:
+            result['user'] = user_match.group(1)
+        
+        # Extract channel
         channel_match = re.search(r"(?:channel|in)\s+#?([a-zA-Z0-9_-]+)", query, re.IGNORECASE)
-        # Extract message after "send", "message", "notify", etc.
-        msg_match = re.search(r"(?:send|message|notify|tell|inform)[^:]*:?\s*(.+)", query, re.IGNORECASE)
-
-        user = user_match.group(1) if user_match else None
-        channel = f"#{channel_match.group(1)}" if channel_match else "#general"
-        message = msg_match.group(1).strip() if msg_match else query
-
-        return {"user": user, "channel": channel, "message": message}
-
+        if channel_match:
+            result['channel'] = channel_match.group(1)
+        
+        # Extract message - try quotes first
+        quote_match = re.search(r'["\']([^"\']+)["\']', query)
+        if quote_match:
+            result['message'] = quote_match.group(1).strip()
+        else:
+            # Try content after colon
+            colon_match = re.search(r":\s*(.+?)(?:\s+(?:to|@|in|channel)|$)", query, re.IGNORECASE)
+            if colon_match:
+                result['message'] = colon_match.group(1).strip()
+            else:
+                # Remove command and extract remaining content before target
+                cleaned = re.sub(r'^(?:send|message|notify|tell|inform)\s+(?:a\s+)?(?:slack\s+)?(?:message\s*)?:?\s*', '', query, flags=re.IGNORECASE)
+                cleaned = re.sub(r'\s+(?:to|@|in|channel)\s+.+$', '', cleaned, flags=re.IGNORECASE)
+                if cleaned.strip():
+                    result['message'] = cleaned.strip()
+        
+        print(f"DEBUG: Final result: {result}")
+        return result
 
 if __name__ == "__main__":
     # TODO: Replace with your actual API keys and configuration from a secure source
