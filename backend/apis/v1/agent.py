@@ -3,8 +3,10 @@ import os
 import uuid
 from datetime import datetime
 from typing import Dict, Optional
+
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import FileResponse
+
 from core.config import settings
 from core.security import encrypt_token, integrations_db
 from views.api_service import make_service_api_call
@@ -199,6 +201,19 @@ async def process_chat_message(message: ChatMessage, request: Request):
                 GITHUB_TOKEN = github_integration["encrypted_token"]
                 GITHUB_OWNER = github_integration["username"]
                 print(f"Using GitHub token for {GITHUB_OWNER}: {GITHUB_TOKEN}")
+                break
+        elif con == "slack":
+            slack_integration = next(
+                (
+                    i
+                    for i in integrations_db.values()
+                    if i["service_type"] == "slack" and i["user_email"] == user_email
+                ),
+                None,
+            )
+            if slack_integration:
+                SLACK_TOKEN = slack_integration["encrypted_token"]
+                print(f"Using Slack token: {SLACK_TOKEN}")
                 break
 
     processor = WorkflowProcessor(
