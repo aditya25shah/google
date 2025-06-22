@@ -1,235 +1,312 @@
-# DevCascade - Your Intelligent Workflow Automation Assistant
+# DevCascade - Intelligent Workflow Automation Assistant
 
-DevCascade streamlines your development processes by integrating with essential tools like GitHub, Jira, Jenkins, and Slack. Leverage the power of natural language commands to manage complex workflows effortlessly.
+[![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://python.org)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.104+-green.svg)](https://fastapi.tiangolo.com)
+[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-## Features
+## 🚀 Introduction
 
-Natural Language Processing: Powered by Google's Gemini AI
-Multi-Service Integration: Connect GitHub, Jira, Jenkins, Slack
-Workflow Automation: Execute complex workflows with simple commands
-User Authentication: Secure login and registration system
-Workflow History: Track and review executed workflows
-Real-time Chat Interface: Interactive bot communication
+DevCascade is a revolutionary AI-powered workflow automation platform designed to streamline development team operations through natural language processing. By integrating seamlessly with essential development tools like GitHub, Jira, Jenkins, and Slack, DevCascade transforms complex multi-step workflows into simple conversational commands.
 
-## Prerequisites
+Instead of manually switching between different platforms to check repositories, create tickets, trigger builds, or send notifications, developers can simply chat with DevCascade using plain English commands. The platform intelligently understands your intent and executes the necessary actions across all connected services.
 
-- Python 3.8+
-- pip (Python package installer)
+## ✨ Key Features
 
-## Getting Started
+- **🤖 Natural Language Processing**: Powered by Google's Gemini AI for intelligent command interpretation
+- **🔗 Multi-Service Integration**: Connect and orchestrate GitHub, Jira, Jenkins, and Slack in one platform
+- **⚡ Instant Workflow Execution**: Execute complex operations with simple conversational commands
+- **🔐 Secure Authentication**: Robust user authentication with JWT-based session management
+- **📊 Real-time Chat Interface**: Interactive bot communication with instant feedback
+- **🔍 Service Management**: Visual dashboard to monitor connection status of all integrated services
 
-### 1. Clone the Repository
+## 🎯 Advanced Features
+
+- **🧠 Intelligent Context Understanding**: AI analyzes conversation history to provide contextual responses
+- **🔄 Cross-Platform Orchestration**: Coordinate actions across multiple services in a single workflow
+- **📈 Comprehensive Workflow History**: Track, review, and retry executed workflows with detailed step-by-step logging
+- **🛠️ Automatic Retry Mechanisms**: Smart retry logic for failed operations with exponential backoff
+- **🎨 Responsive Design**: Modern, mobile-friendly interface built with Tailwind CSS
+- **📱 Real-time Notifications**: Instant updates on workflow progress and completion status
+
+## 🔄 How It Works
+
+### Step 1: User Authentication
+- **Login Process**: Users can register and log in using their email credentials
+- **Session Management**: Secure JWT token-based authentication ensures user sessions remain active
+- **Profile Creation**: System automatically creates user profiles with personalized settings
+
+### Step 2: Service Connection
+After logging in, users need to connect their development services:
+
+#### Connecting GitHub
+- Navigate to the integrations section
+- Click "Connect GitHub"
+- Obtain your GitHub Personal Access Token from GitHub Settings → Developer Settings → Personal Access Tokens
+- Enter the token to establish connection
+
+#### Connecting Jira
+- Click "Connect Jira" 
+- Get your Jira API token from Jira Account Settings → Security → API Tokens
+- Provide your Jira domain URL, username, and API token
+
+#### Connecting Jenkins
+- Select "Connect Jenkins"
+- Generate Jenkins API token from Jenkins User Settings → Configure → API Token
+- Enter Jenkins server URL, username, and API token
+
+#### Connecting Slack
+- Choose "Connect Slack"
+- Create a Slack app at api.slack.com/apps
+- Install the app to your workspace and copy the Bot User OAuth Token
+- Enter the token to enable Slack integration
+
+#### Connecting Gemini AI
+- **Required for core functionality**
+- Visit Google AI Studio (aistudio.google.com/app/apikey)
+- Generate your Gemini API key
+- Add the key to enable natural language processing
+
+### Step 3: Using DevCascade
+Once services are connected, you can perform various operations through natural language:
+
+#### GitHub Operations
+- **Repository Management**: "Show me all repositories in my organization"
+- **Branch Information**: "How many branches does the main repository have?"
+- **Issue Tracking**: "List all open issues assigned to me"
+- **Commit History**: "What are the latest 5 commits in the development branch?"
+- **Pull Requests**: "Show me pending pull requests that need review"
+
+#### Jira Operations
+- **Ticket Management**: "Create a new bug ticket for login issues"
+- **Sprint Planning**: "Show me all tasks in the current sprint"
+- **Status Updates**: "Move ticket PROJ-123 to In Progress"
+- **Reporting**: "Generate a summary of completed tasks this week"
+
+#### Jenkins Operations
+- **Build Management**: "Trigger a build for the main branch"
+- **Deployment**: "Deploy the latest version to staging environment"
+- **Job Monitoring**: "Check the status of the last deployment"
+- **Build History**: "Show me the last 10 build results"
+
+#### Slack Operations
+- **Team Communication**: "Send a deployment notification to the dev team"
+- **Status Updates**: "Notify the team about the production release"
+- **Alert Management**: "Send an alert about the server downtime"
+
+## 🏗️ Architecture Overview
+
+### Frontend Layer
+- **Technology**: HTML5, Tailwind CSS, Vanilla JavaScript
+- **Components**: 
+  - Real-time chat interface with WebSocket communication
+  - Service integration dashboard with visual status indicators
+  - Workflow history viewer with expandable execution details
+  - Responsive design optimized for desktop and mobile devices
+- **Features**: 
+  - Dynamic UI updates without page refresh
+  - Interactive service connection management
+  - Real-time workflow progress tracking
+
+### Backend Layer
+- **Framework**: FastAPI (Python) with async/await support
+- **Core Components**:
+  - **Authentication System**: JWT-based user management with secure token handling
+  - **AI Processing Engine**: Google Gemini AI integration for natural language understanding
+  - **Service Adapters**: Modular connectors for each integrated service (GitHub, Jira, Jenkins, Slack)
+  - **Workflow Orchestrator**: Manages multi-step operations across different services
+  - **API Gateway**: Centralized endpoint management with rate limiting and validation
+- **Data Storage**: In-memory storage (suitable for development; database recommended for production)
+
+### Integration Layer
+- **GitHub API**: Repository management, issue tracking, pull requests, branch operations
+- **Jira REST API**: Ticket creation, status updates, project management, sprint planning
+- **Jenkins API**: Build triggering, job monitoring, deployment automation, build history
+- **Slack Web API**: Message sending, channel management, user notifications
+- **Gemini AI API**: Natural language processing, intent recognition, context understanding
+
+### Workflow Execution Process
+1. **Input Processing**: User sends natural language command through chat interface
+2. **AI Analysis**: Gemini AI processes the command and extracts actionable intent
+3. **Service Mapping**: System determines which services need to be involved
+4. **Workflow Planning**: Creates step-by-step execution plan with proper sequencing
+5. **Sequential Execution**: Executes each step with comprehensive error handling
+6. **Progress Updates**: Provides real-time feedback throughout the workflow
+7. **Result Compilation**: Aggregates results and presents comprehensive summary
+
+## 🛠️ Technology Stack
+
+### Backend Technologies
+- **FastAPI**: High-performance, async Python web framework
+- **Google Gemini AI**: Advanced large language model for natural language processing
+- **Uvicorn**: Lightning-fast ASGI server for Python applications
+- **Pydantic**: Data validation and serialization using Python type hints
+- **Python Requests**: HTTP library for external API integrations
+- **JWT (PyJWT)**: JSON Web Tokens for secure authentication
+
+### Frontend Technologies
+- **HTML5**: Modern semantic markup with accessibility features
+- **Tailwind CSS**: Utility-first CSS framework for rapid UI development
+- **Vanilla JavaScript**: Pure JavaScript for DOM manipulation and API communication
+- **WebSocket API**: Real-time bidirectional communication
+- **CSS Grid & Flexbox**: Modern responsive layout techniques
+
+### APIs and Integrations
+- **GitHub REST API v4**: Repository and organization management
+- **Jira REST API v2/v3**: Project management and issue tracking
+- **Jenkins REST API**: Continuous integration and deployment
+- **Slack Web API**: Team communication and collaboration
+- **Google Gemini AI API**: Natural language processing and understanding
+
+## 💻 System Requirements
+
+### Minimum Requirements
+- **Operating System**: Windows 10, macOS 10.14, or Linux (Ubuntu 18.04+)
+- **Python**: Version 3.8 or higher
+- **Memory**: 4GB RAM minimum, 8GB recommended
+- **Storage**: 1GB free disk space
+- **Network**: Stable internet connection for API communications
+
+### Software Dependencies
+- **Python Package Manager**: pip (included with Python)
+- **Web Browser**: Modern browser with JavaScript support
+  - Chrome 90+, Firefox 88+, Safari 14+, Edge 90+
+- **Git**: For repository cloning and version control
+
+### Development Tools (Optional)
+- **VS Code**: Recommended IDE with Live Server extension
+- **Postman**: For API testing and documentation
+- **Python Virtual Environment**: For dependency isolation
+
+## 🚀 Getting Started
+
+### 1. Repository Setup
 ```bash
+# Clone the repository
 git clone <your-repository-url>
 cd <repository-directory>
+
+# Verify Python installation
+python --version  # Should output 3.8 or higher
 ```
 
 ### 2. Backend Setup
 
-Install Python dependencies:
+#### Install Dependencies
 ```bash
+# Install required packages
+pip install -r requirements.txt
+
+# Alternative: Using virtual environment (recommended)
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-Configure environment variables:
-
-Copy the .env file and update the values
-Required: Set your GEMINI_API_KEY from Google AI Studio
-Optional: Configure API keys for GitHub, Jira, Jenkins, Slack
-
-
-Run the FastAPI server:
+#### Environment Configuration
 ```bash
-python main.py
+# Copy environment template
+cp .env.example .env
+
+# Edit .env file with your API keys
+# At minimum, set GEMINI_API_KEY for core functionality
 ```
-or
+
+#### Start Backend Server
 ```bash
+# Method 1: Direct execution
+python main.py
+
+# Method 2: Using Uvicorn (recommended)
 uvicorn main:app --reload --host 0.0.0.0 --port 8000
 ```
-The API will be available at http://localhost:8000
+
+API server will be available at `http://localhost:8000`
+Interactive documentation at `http://localhost:8000/docs`
 
 ### 3. Frontend Setup
 
-Serve the HTML file:
+#### Option 1: VS Code Live Server
+1. Install "Live Server" extension in VS Code
+2. Right-click on `index.html`
+3. Select "Open with Live Server"
+4. Application opens automatically in browser
 
-Use a local web server (like Live Server in VS Code)
-Or use Python's built-in server:
+#### Option 2: Python HTTP Server
 ```bash
+# Serve static files
 python -m http.server 3000
+
+# Access application at http://localhost:3000
 ```
 
+### 4. First-Time Setup
+1. **Register Account**: Create new user account with email and password
+2. **Connect Services**: Add API keys for desired services (GitHub, Jira, Jenkins, Slack)
+3. **Test Integration**: Send a simple command like "Show me my GitHub repositories"
+4. **Explore Features**: Try different natural language commands to familiarize yourself with capabilities
 
-Access the application:
+## 📚 API Documentation
 
-Open http://localhost:3000 in your browser
+### Authentication Endpoints
+- `POST /auth/register`: Create new user account
+- `POST /auth/login`: Authenticate existing user
+- `GET /auth/me`: Get current user information
 
+### Integration Management
+- `POST /integrations/connect`: Connect new service integration
+- `GET /integrations/list`: List all connected services
+- `DELETE /integrations/{id}`: Remove service integration
 
-
-### 4. Getting API Keys
-
-#### Gemini AI (Required)
-1. Go to [Google AI Studio](https://aistudio.google.com/app/apikey) (or search for "Google AI Studio API Key").
-2. Create a new API key.
-3. Add it to your `.env` file as `GEMINI_API_KEY`.
-
-#### GitHub (Optional)
-1. Go to GitHub **Settings** > **Developer settings** > **Personal access tokens** > **Tokens (classic)**.
-2. Click **Generate new token** (or "Generate new token (classic)").
-3. Give your token a descriptive name.
-4. Select the necessary scopes/permissions (e.g., `repo` for accessing repositories, `workflow` for GitHub Actions, etc., depending on your bot's needs).
-5. Click **Generate token**.
-6. Copy the token immediately (you won't see it again).
-7. Add it to your `.env` file as `GITHUB_TOKEN`.
-
-#### Jira (Optional)
-1. Go to your Jira account settings:
-    - Click on your profile picture in the bottom left.
-    - Select **Profile**.
-    - Go to **Security** > **Create and manage API tokens** (or similar wording depending on your Jira version).
-2. Click **Create API token**.
-3. Give your token a label.
-4. Click **Create**.
-5. Copy the token immediately.
-6. Add your Jira URL (e.g., `JIRA_URL=https://your-domain.atlassian.net`), your Jira email/username (e.g., `JIRA_USERNAME=your_email@example.com`), and the API token (e.g., `JIRA_API_TOKEN=your_token`) to your `.env` file.
-
-#### Jenkins (Optional)
-1. Log in to your Jenkins instance.
-2. Click on your username in the top right corner.
-3. Select **Configure** (or **My Views** > **Configure** depending on the version).
-4. Under the "API Token" section, click **Add new Token**.
-5. Give the token a name and click **Generate**.
-6. Copy the generated token immediately.
-7. Add your Jenkins URL (e.g., `JENKINS_URL=http://your-jenkins-server:8080`), your Jenkins username (e.g., `JENKINS_USERNAME=your_username`), and the API token (e.g., `JENKINS_API_TOKEN=your_token`) to your `.env` file.
-
-#### Slack (Optional)
-1. Go to api.slack.com/apps and click **Create New App**.
-2. Choose "From scratch", give your app a name, and select your workspace.
-3. Under "Add features and functionality", select **Bots**.
-4. Configure your bot user and add necessary scopes under **OAuth & Permissions** (e.g., `chat:write`, `commands`).
-5. Install the app to your workspace.
-6. Copy the **Bot User OAuth Token** (starts with `xoxb-`).
-7. Add this token to your `.env` file (e.g., `SLACK_BOT_TOKEN=your_xoxb_token`).
-8. (Optional) If you need a Webhook URL for incoming messages to Slack, navigate to **Incoming Webhooks**, activate it, and add a new webhook to your workspace. Copy the Webhook URL and add it to `.env` (e.g., `SLACK_WEBHOOK_URL=your_webhook_url`).
-
-## Usage
-
-### 1. User Registration/Login
-
-- Create an account or log in with existing credentials.
-- Note: All user data is currently stored in memory. This should be replaced with a persistent database solution in a production environment.
-
-### 2. Connect Services
-
-- Click the "Connect" button for each service (GitHub, Jira, Jenkins, Slack) you wish to integrate.
-- Provide the necessary API credentials when prompted.
-- Services will indicate a "Connected" status once successfully configured.
-
-### 3. Chat with DevCascade
-
-Interact with DevCascade using natural language commands in the chat interface. Examples include:
-- "Deploy the latest release to staging"
-- "Create a new GitHub issue for bug fix"
-- "Trigger Jenkins build for main branch"
-- "Send deployment notification to team"
-- "Create a Jira ticket for feature request"
-
-### 4. View Workflow History
-
-- Executed workflows are logged in the history section.
-- Click "View Details" for a specific workflow to see its individual steps and their statuses.
-
-## API Reference
-
-The backend exposes the following API endpoints. For detailed interactive documentation (Swagger UI), navigate to `http://localhost:8000/docs` after starting the backend server.
-
-### Authentication
-- `POST /auth/register`: Register a new user.
-- `POST /auth/login`: Log in an existing user.
-- `GET /auth/me`: Get information about the currently authenticated user.
-
-### Integrations
-- `POST /integrations/connect`: Connect a new service.
-- `GET /integrations/list`: List all currently connected services.
-- `DELETE /integrations/{id}`: Disconnect a specific service by its ID.
-
-### Chat & Workflows
-- `POST /chat/process`: Process a chat message and potentially trigger a workflow.
-- `GET /workflows/history`: Retrieve the history of executed workflows.
-- `GET /workflows/{id}`: Get details for a specific workflow by its ID.
-- `POST /workflows/{id}/retry`: Retry a failed workflow by its ID.
+### Chat and Workflows
+- `POST /chat/process`: Process natural language commands
+- `GET /workflows/history`: Retrieve workflow execution history
+- `GET /workflows/{id}`: Get specific workflow details
+- `POST /workflows/{id}/retry`: Retry failed workflow
 
 ### Service-Specific Endpoints
-- **GitHub:** `/github/*` (e.g., for repository actions, issue management)
-- **Jira:** `/jira/*` (e.g., for ticket creation, status updates)
-- **Jenkins:** `/jenkins/*` (e.g., for triggering builds, checking job status)
-- **Slack:** `/slack/*` (e.g., for sending messages, notifications)
+- **GitHub**: `/github/*` - Repository operations, issue management
+- **Jira**: `/jira/*` - Ticket operations, project management  
+- **Jenkins**: `/jenkins/*` - Build operations, deployment management
+- **Slack**: `/slack/*` - Messaging, notification management
 
-## Developer Information
+For complete API documentation, visit `http://localhost:8000/docs` after starting the backend server.
 
-### Current Limitations
-- **In-memory Storage:** User data and workflow history are stored in memory and will be lost on server restart. Implement a database (e.g., PostgreSQL, MongoDB) for production.
-- **Simulated Service Integrations:** Some service integrations might be simulated. Implement actual API calls for full functionality.
-- **Basic Error Handling:** Error handling is currently basic. Enhance this for robustness in a production environment.
-- **No API Token Encryption:** Sensitive data like API tokens are not encrypted at rest. Implement encryption for production.
+## 🔧 Configuration
 
-### Security Considerations
-- **Data Encryption:** Encrypt sensitive data, including API tokens and user passwords, both in transit (HTTPS) and at rest.
-- **CORS Policy:** Implement and configure a proper Cross-Origin Resource Sharing (CORS) policy.
-- **Rate Limiting:** Add rate limiting to API endpoints to prevent abuse.
-- **HTTPS:** Always use HTTPS in production environments.
-- **Session Management:** Implement secure and robust session management.
-- **Input Validation:** Thoroughly validate and sanitize all user inputs.
+### Environment Variables
+```bash
+# Required
+GEMINI_API_KEY=your_gemini_api_key
 
-### Future Enhancements / Roadmap
-- Database integration (e.g., PostgreSQL, MongoDB)
-- Full implementation of real service API integrations
-- Advanced workflow orchestration and customization
-- Webhook support for real-time updates from integrated services
-- Multi-tenant support
-- Advanced user and permission management
-- Workflow templates for common tasks
-- Scheduled and recurring workflows
+# Optional service integrations
+GITHUB_TOKEN=your_github_token
+JIRA_URL=https://your-domain.atlassian.net
+JIRA_USERNAME=your_email@example.com
+JIRA_API_TOKEN=your_jira_token
+JENKINS_URL=http://your-jenkins:8080
+JENKINS_USERNAME=your_username
+JENKINS_API_TOKEN=your_jenkins_token
+SLACK_BOT_TOKEN=xoxb-your-slack-token
+```
 
-## Troubleshooting
+### Development vs Production
+- **Development**: Uses in-memory storage, debug logging enabled
+- **Production**: Requires database setup, secure HTTPS, environment-specific configurations
 
-### Common Issues
+## 🤝 Contributing
 
-#### CORS Errors
-- Ensure the frontend is served from a web server (e.g., `python -m http.server` or VS Code Live Server) and not opened directly as a `file:///` URL.
-- Verify the CORS configuration in `main.py` (FastAPI backend) allows requests from your frontend's origin.
+1. Fork the repository
+2. Create feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit changes (`git commit -m 'Add amazing feature'`)
+4. Push to branch (`git push origin feature/amazing-feature`)
+5. Open Pull Request
 
-#### API Connection Issues
-- Confirm the backend server is running (typically on `http://localhost:8000`).
-- Double-check the `baseURL` or API endpoint configuration in your frontend JavaScript (`script.js`).
+## 📄 License
 
-#### Gemini AI Not Working
-- Verify that your `GEMINI_API_KEY` in the `.env` file is correct and active.
-- Check your usage quota and API status in the Google AI Studio.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-#### Service Connection Failures
-- Ensure the API credentials (tokens, URLs, usernames) entered for GitHub, Jira, Jenkins, or Slack are accurate.
-- Consult the respective service's API documentation for specific error messages or connection requirements.
-- Verify that the API tokens/keys have the necessary permissions/scopes granted for the intended operations.
+## 🆘 Support
 
-## Contributing
-
-We welcome contributions to DevCascade! Please follow these steps:
-1. Fork the repository.
-2. Create a new feature branch (`git checkout -b feature/YourAmazingFeature`).
-3. Make your changes and commit them with clear, descriptive messages.
-4. Test your changes thoroughly.
-5. Push your branch to your fork (`git push origin feature/YourAmazingFeature`).
-6. Open a pull request against the main repository.
-
-Please ensure your code adheres to the project's coding standards and includes relevant tests where applicable.
-
-## License
-
-This project is licensed under the MIT License. See the `LICENSE` file for more details.
-
-## Support
-
-If you encounter issues or have questions:
-- First, check the **Troubleshooting** section above.
-- Review the interactive API documentation available at `http://localhost:8000/docs` (once the backend is running).
-- Open an issue on the project's GitHub repository, providing as much detail as possible.
+- **Documentation**: Visit `http://localhost:8000/docs` for API reference
+- **Issues**: Report bugs on GitHub repository
+- **Community**: Join our Discord server for community support
