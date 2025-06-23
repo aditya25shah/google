@@ -1,5 +1,5 @@
 import json
-from typing import Any, Dict, Optional, TypedDict, Union, List
+from typing import Any, Dict, Optional, TypedDict, Union
 import httpx
 import google.generativeai as genai
 import requests  # type: ignore
@@ -12,23 +12,17 @@ import re
 # Define the state for our graph
 class WorkflowState(TypedDict):
     user_query: str
-    action_type: Optional[str]  # e.g., "github_create_issue", "slack_send_message", "compound_action"
+    action_type: Optional[str]  # e.g., "github_create_issue", "slack_send_message"
     repo_name: Optional[str]
     issue_number: Optional[int]
     comment_body: Optional[str]
     issue_title: Optional[str]  # For creating issues
     issue_body: Optional[str]  # For creating issues
     api_response: Union[Dict[str, Any], None]  # To store the response from GitHub/Slack API calls
-    error_message: Optional[str]  # FIXED: Only one error_message field
+    error_message: Optional[str]
     branch_name: Optional[str]  # For future use, e.g., for GitHub branches
     branch_list: Optional[Dict[str, Any]]  # For storing branch details if needed
-    source_branch: Optional[str]  # For branch operations
-    slack_message: Optional[str]  # For Slack messages
-    slack_channel: Optional[str]  # For Slack channel
-    slack_user: Optional[str]  # For Slack user
-    compound_actions: Optional[List[str]]  
-    primary_response: Optional[Dict[str, Any]]  
-    secondary_responses: Optional[List[Dict[str, Any]]] 
+
 
 class WorkflowProcessor:
     def __init__(self, gemini_api_key: str, github_token: str, slack_token: str, github_owner: str):
@@ -112,7 +106,7 @@ class WorkflowProcessor:
 
     
     def _call_send_slack_message(self, message: str, channel: str = "#general", user: str = None) -> Dict[str, Any]:
-        """Sends a message to a Slack channel or user."""
+        """Sends a message to a Slack channel or user with improved channel resolution."""
         
         # DEBUG: Print what we're receiving
         print(f"DEBUG - Message: '{message}'")
@@ -176,8 +170,16 @@ class WorkflowProcessor:
                     channel_name = channel.lstrip("#")
                     print(f"DEBUG - Processed channel name: '{channel_name}'")
                     
-                    # Try public channels first
-                    channels_response = client.get("https://slack.com/api/conversations.list", headers=headers)
+                    # IMPROVED: Try multiple conversation types in one call
+                    channels_response = client.get(
+                        "https://slack.com/api/conversations.list",
+                        headers=headers,
+                        params={
+                            "types": "public_channel,private_channel",  # Get both public and private
+                            "exclude_archived": "true",
+                            "limit": 1000  # Increase limit to get more channels
+                        }
+                    )
                     
                     if channels_response.status_code != 200:
                         return {"ok": False, "error": f"HTTP error {channels_response.status_code} when listing channels"}
@@ -190,31 +192,28 @@ class WorkflowProcessor:
                             return {"ok": False, "error": "Invalid Slack token"}
                         return {"ok": False, "error": f"Could not list channels: {error_msg}"}
                     
-                    # Find channel ID in public channels
+                    # Find channel ID
                     channel_id = None
                     for ch in channels_data.get("channels", []):
                         if ch.get("name") == channel_name:
                             channel_id = ch.get("id")
+                            print(f"DEBUG - Found channel '{channel_name}' with ID: {channel_id}")
                             break
                     
-                    # If not found in public channels, try private channels
+                    # If still not found, try to check if it's a direct channel ID
                     if not channel_id:
-                        private_channels_response = client.get(
-                            "https://slack.com/api/conversations.list",
-                            headers=headers,
-                            params={"types": "private_channel"}
-                        )
-                        
-                        if private_channels_response.status_code == 200:
-                            private_data = private_channels_response.json()
-                            if private_data.get("ok"):
-                                for ch in private_data.get("channels", []):
-                                    if ch.get("name") == channel_name:
-                                        channel_id = ch.get("id")
-                                        break
-                    
-                    if not channel_id:
-                        return {"ok": False, "error": f"Channel '{channel_name}' not found. Bot may not be added to this channel."}
+                        # Check if the channel name is actually a channel ID (starts with C)
+                        if channel_name.startswith('C') and len(channel_name) >= 9:
+                            channel_id = channel_name
+                            print(f"DEBUG - Using channel name as ID: {channel_id}")
+                        else:
+                            # List available channels for debugging
+                            available_channels = [ch.get("name") for ch in channels_data.get("channels", [])]
+                            print(f"DEBUG - Available channels: {available_channels[:10]}")  # Show first 10
+                            return {
+                                "ok": False, 
+                                "error": f"Channel '{channel_name}' not found. Available channels (first 10): {', '.join(available_channels[:10])}"
+                            }
                 
                 # Send message
                 print(f"DEBUG - Final channel_id: '{channel_id}'")
@@ -244,6 +243,8 @@ class WorkflowProcessor:
                         return {"ok": False, "error": f"Channel not found or bot not added to channel"}
                     elif error_msg == "not_in_channel":
                         return {"ok": False, "error": f"Bot is not a member of the channel"}
+                    elif error_msg == "channel_not_found":
+                        return {"ok": False, "error": f"Channel ID '{channel_id}' not found"}
                     return {"ok": False, "error": f"Could not send message: {error_msg}"}
                 
                 return result
@@ -254,7 +255,7 @@ class WorkflowProcessor:
             return {"ok": False, "error": f"Slack API connection error: {str(e)}"}
         except Exception as e:
             return {"ok": False, "error": f"Unexpected error: {str(e)}"}
-
+    
 
     def _call_list_github_issues(self, repo_name: str) -> Dict[str, Any]:
         """Lists issues for a given GitHub repository."""
@@ -707,9 +708,6 @@ CLARIFICATION_NEEDED: [yes if user needs to specify what issue to create, or no]
 
         return None
 
-    def _extract_branch_name(self, query: str) -> str:
-        """Extract branch name from query"""
-        patterns = [r"branch\s+([a-zA-Z0-9_/-]+)", r"on\s+([a-zA-Z0-9_/-]+)\s+branch", r"from\s+([a-zA-Z0-9_/-]+)"]
 
     # ...pattern matching logic
     def _create_issue_node(self, state: WorkflowState) -> Dict[str, Any]:
@@ -986,6 +984,10 @@ CLARIFICATION_NEEDED: [yes if user needs to specify what issue to create, or no]
             "issue_body": None,
             "api_response": None,
             "error_message": None,
+            "branch_name": None,
+            "branch_list": None,
+            "source_branch": None,
+            "needs_clarification": None,
         }
         final_state = self.app.invoke(initial_state)
         # print(f"--- Internal Final Workflow State --- \n{json.dumps(final_state, indent=2)}") # For debugging
@@ -993,42 +995,57 @@ CLARIFICATION_NEEDED: [yes if user needs to specify what issue to create, or no]
 
     def _extract_slack_target(self, query: str) -> Dict[str, str]:
         """
-        Extracts Slack message target (user or channel) and message text from the query.
-        Returns a dict with keys: 'user', 'channel', 'message'
+        IMPROVED: Better extraction of Slack message target and message text.
         """
+        import re
+
+        # Try to extract user mention (e.g., '@john', 'to John', 'to @john')
+        user_match = re.search(r"(?:to|@)\s*@?([a-zA-Z0-9._-]+)", query)
         
-        print(f"DEBUG: Processing query: '{query}'")
+        # IMPROVED: Better channel extraction patterns
+        channel_patterns = [
+            r"(?:channel|in|to)\s+#([a-zA-Z0-9_-]+)",  # "to #channel"
+            r"#([a-zA-Z0-9_-]+)",  # Direct "#channel"
+            r"(?:channel|in|to)\s+([a-zA-Z0-9_-]+)",  # "to channel"
+        ]
         
-        result = {'user': None, 'channel': None, 'message': None}
+        channel_match = None
+        for pattern in channel_patterns:
+            channel_match = re.search(pattern, query, re.IGNORECASE)
+            if channel_match:
+                break
         
-        # Extract user mention
-        user_match = re.search(r"(?:to|@)\s*@?([a-zA-Z0-9._-]+)", query, re.IGNORECASE)
-        if user_match:
-            result['user'] = user_match.group(1)
+        # IMPROVED: Better message extraction
+        msg_patterns = [
+            r'["\']([^"\']+)["\']',  # Quoted strings first
+            r"(?:send|message|notify|tell|inform)\s+(?:slack\s+)?(?:message\s*)?:?\s*(.+?)(?:\s+(?:to|in|@|#)|\s*$)",
+            r"(?:send|message|notify|tell|inform).*?:\s*(.+)",
+        ]
         
-        # Extract channel
-        channel_match = re.search(r"(?:channel|in)\s+#?([a-zA-Z0-9_-]+)", query, re.IGNORECASE)
-        if channel_match:
-            result['channel'] = channel_match.group(1)
+        message = None
+        for pattern in msg_patterns:
+            msg_match = re.search(pattern, query, re.IGNORECASE | re.DOTALL)
+            if msg_match:
+                potential_message = msg_match.group(1).strip()
+                # Clean up the message
+                potential_message = re.sub(r'\s+(?:to|@|in|channel)\s+.+$', '', potential_message, flags=re.IGNORECASE)
+                if potential_message and len(potential_message) > 2:
+                    message = potential_message
+                    break
         
-        # Extract message - try quotes first
-        quote_match = re.search(r'["\']([^"\']+)["\']', query)
-        if quote_match:
-            result['message'] = quote_match.group(1).strip()
+        user = user_match.group(1) if user_match else None
+        channel = f"#{channel_match.group(1)}" if channel_match else "#general"
+        
+        # Clean up the message
+        if message:
+            message = message.strip(' .,!?')
+            # Remove any remaining channel/user references
+            message = re.sub(r'(?:to|@|#)\s*[a-zA-Z0-9._-]+', '', message).strip()
         else:
-            # Try content after colon
-            colon_match = re.search(r":\s*(.+?)(?:\s+(?:to|@|in|channel)|$)", query, re.IGNORECASE)
-            if colon_match:
-                result['message'] = colon_match.group(1).strip()
-            else:
-                # Remove command and extract remaining content before target
-                cleaned = re.sub(r'^(?:send|message|notify|tell|inform)\s+(?:a\s+)?(?:slack\s+)?(?:message\s*)?:?\s*', '', query, flags=re.IGNORECASE)
-                cleaned = re.sub(r'\s+(?:to|@|in|channel)\s+.+$', '', cleaned, flags=re.IGNORECASE)
-                if cleaned.strip():
-                    result['message'] = cleaned.strip()
-        
-        print(f"DEBUG: Final result: {result}")
-        return result
+            message = "Hello from DevCascade!"  # Default message
+
+        print(f"DEBUG - Extracted - User: {user}, Channel: {channel}, Message: {message}")
+        return {"user": user, "channel": channel, "message": message}
 
 if __name__ == "__main__":
     # TODO: Replace with your actual API keys and configuration from a secure source
