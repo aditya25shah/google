@@ -369,5 +369,4 @@ pip install -r requirements.txt && python main.py
 ```
 
 Start chatting with your development tools today! 🚀
-#   g o o g l e  
- 
+#
